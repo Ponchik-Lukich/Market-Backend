@@ -13,7 +13,7 @@ const (
 	port     = 5432
 	user     = "postgres"
 	password = "password"
-	dbname   = "your_db_name"
+	dbname   = "postgres"
 )
 
 func ConnectDB() *sqlx.DB {
