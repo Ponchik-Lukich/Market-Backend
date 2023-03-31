@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -32,4 +33,28 @@ func ConnectDB() *sqlx.DB {
 	log.Println("Successfully connected to the database")
 	return db
 
+}
+
+func InitializeTables(db *sqlx.DB) error {
+	dir, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	folder := fmt.Sprintf("%s/%s/%s/%s", dir, "api", "models", "queries")
+	tables := []string{"orders", "group_orders", "couriers"}
+
+	for _, table := range tables {
+		sql, err := os.ReadFile(fmt.Sprintf("%s/%s.sql", folder, table))
+
+		if err != nil {
+			return err
+		}
+
+		_, err = db.Exec(string(sql))
+
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

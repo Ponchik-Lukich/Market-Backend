@@ -17,6 +17,10 @@ func main() {
 			panic(err)
 		}
 	}(db)
+	err := config.InitializeTables(db)
+	if err != nil {
+		panic(err)
+	}
 
 	e := setupServer()
 	e.Logger.Fatal(e.Start(":8080"))
