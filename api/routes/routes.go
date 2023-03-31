@@ -16,4 +16,7 @@ func SetupRoutes(e *echo.Echo) {
 	e.GET("/orders/:order_id", controllers.GetOrder)
 	e.GET("/orders", controllers.GetOrders)
 	e.POST("/orders/complete", controllers.CompleteOrder)
+
+	// Ping
+	e.GET("/ping", ping)
 }

@@ -18,6 +18,12 @@ func GetOrder(c echo.Context) error {
 
 func GetOrders(c echo.Context) error {
 	// Implement logic for getting all orders
+	// Returns information about all orders, as well as their additional information: order weight, delivery area, time intervals at which it is convenient to accept the order.
+	//The method has parameters `offset` and `limit` to provide paginated output.
+	//If:
+	//`offset` or `limit` are not passed, by default it should be assumed that `offset = 0`, `limit = 1`;
+	//no offers were found for the specified `offset` and `limit`, you need to return an empty list of `orders`.
+
 	return c.String(200, "Orders found")
 }
 
