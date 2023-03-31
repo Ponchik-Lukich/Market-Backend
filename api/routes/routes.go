@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/labstack/echo/v4"
-	"yandex-team.ru/bstask/controllers"
+	"yandex-team.ru/bstask/api/controllers"
 )
 
 func SetupRoutes(e *echo.Echo) {
