@@ -9,10 +9,9 @@ const (
 )
 
 type Courier struct {
-	CourierID    int64
-	CourierType  CourierType
-	Regions      []int
-	WorkingHours []string
+	CourierID   int64
+	CourierType CourierType
+	MaxWeight   int
 }
 
 type CreateCourierDto struct {

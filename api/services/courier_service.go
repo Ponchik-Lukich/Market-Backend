@@ -24,7 +24,7 @@ func GetCouriers(db *sqlx.DB, limit int, offset int) ([]models.Courier, error) {
 
 	for rows.Next() {
 		var courier models.Courier
-		err := rows.Scan(&courier.CourierID, &courier.CourierType, &courier.Regions, &courier.WorkingHours)
+		err := rows.Scan(&courier.CourierID, &courier.CourierType, &courier.MaxWeight)
 		if err != nil {
 			return nil, err
 		}

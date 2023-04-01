@@ -21,13 +21,18 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
+	// insert in couriers table
+	//query := `INSERT INTO couriers (courier_id, courier_type, max_weight) VALUES ($1, $2, $3)`
+	//_, err = db.Exec(query, 1, "foot", 1)
+	//if err != nil {
+	//	panic(err)
+	//}
 	e := setupServer()
 	e.Logger.Fatal(e.Start(":8080"))
 }
 
 func setupServer() *echo.Echo {
 	e := echo.New()
-	routes.SetupRoutes(e)
+	routes.SetupRoutes(e, db)
 	return e
 }

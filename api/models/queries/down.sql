@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS couriers;
+DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS group_orders;

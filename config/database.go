@@ -41,7 +41,7 @@ func InitializeTables(db *sqlx.DB) error {
 		return err
 	}
 	folder := fmt.Sprintf("%s/%s/%s/%s", dir, "api", "models", "queries")
-	tables := []string{"orders", "group_orders", "couriers"}
+	tables := []string{"couriers", "orders", "courier_work_shifts", "order_completion"}
 
 	for _, table := range tables {
 		sql, err := os.ReadFile(fmt.Sprintf("%s/%s.sql", folder, table))
@@ -55,6 +55,24 @@ func InitializeTables(db *sqlx.DB) error {
 		if err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func DropTables(db *sqlx.DB) error {
+	dir, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	folder := fmt.Sprintf("%s/%s/%s/%s", dir, "api", "models", "queries")
+	sql, err := os.ReadFile(fmt.Sprintf("%s/%s.sql", folder, "down"))
+	if err != nil {
+		return err
+	}
+	_, err = db.Exec(string(sql))
+
+	if err != nil {
+		return err
 	}
 	return nil
 }

@@ -27,8 +27,8 @@ func GetCourier(c echo.Context) error {
 //	couriers, err := services.GetCouriers(db, 10, 0)
 //}
 
-func GetCouriers(c echo.Context) error {
-	db := c.Get("db").(*sqlx.DB)
+func GetCouriers(c echo.Context, db *sqlx.DB) error {
+	//db := c.Get("db").(*sqlx.DB)
 
 	// Get the limit and offset parameters if they are provided
 	limitParam := c.QueryParam("limit")
