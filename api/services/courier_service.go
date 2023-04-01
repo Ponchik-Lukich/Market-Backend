@@ -1,9 +1,9 @@
 package services
 
 import (
+	"fmt"
 	"github.com/jmoiron/sqlx"
-	"github.com/labstack/echo/v4"
-	"net/http"
+	"strings"
 	"yandex-team.ru/bstask/api/models"
 	"yandex-team.ru/bstask/api/utils/validators"
 )
@@ -30,54 +30,79 @@ func GetCouriers(db *sqlx.DB, limit int, offset int) ([]models.Courier, error) {
 	return couriers, nil
 }
 
-//func CreateCouriers(db *sqlx.DB, couriers []models.CreateCourierDto) error {
-//
-//	query := `INSERT INTO couriers (type, working_areas, working_hours) VALUES ($1, $2, $3)`
+//func CreateCouriers(db *sqlx.DB, couriers []models.CreateCourierDto) ([]models.Courier, error) {
+//	var createdCouriers []models.Courier
+//	query := `INSERT INTO couriers (type, working_areas, working_hours) VALUES ($1, $2, $3) RETURNING id, type, working_areas, working_hours`
 //	stmt, err := db.Prepare(query)
 //	if err != nil {
-//		return echo.NewHTTPError(http.StatusInternalServerError, "Error preparing query")
+//		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Error preparing query")
 //	}
 //	defer stmt.Close()
 //
 //	for _, courier := range couriers {
 //		err = validators.ValidateCourier(courier)
 //		if err != nil {
-//			return &validators.ValidationError{
+//			return nil, &validators.ValidationError{
 //				Message: "Validation failed for courier",
 //				Data:    courier,
 //			}
 //		}
-//		_, err := stmt.Exec(courier.CourierType, courier.WorkingAreas, courier.WorkingHours)
+//		var createdCourier models.Courier
+//		err := stmt.QueryRow(courier.CourierType, courier.WorkingAreas, courier.WorkingHours).Scan(&createdCourier.CourierID, &createdCourier.CourierType, &createdCourier.WorkingAreas, &createdCourier.WorkingHours)
 //		if err != nil {
-//			return err
+//			return nil, err
 //		}
+//		createdCouriers = append(createdCouriers, createdCourier)
 //	}
-//	return nil
+//	return createdCouriers, nil
 //}
 
 func CreateCouriers(db *sqlx.DB, couriers []models.CreateCourierDto) ([]models.Courier, error) {
-	var createdCouriers []models.Courier
-	query := `INSERT INTO couriers (type, working_areas, working_hours) VALUES ($1, $2, $3) RETURNING id, type, working_areas, working_hours`
-	stmt, err := db.Prepare(query)
-	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Error preparing query")
-	}
-	defer stmt.Close()
+	createdCouriers := []models.Courier{}
 
+	// Validate couriers
 	for _, courier := range couriers {
-		err = validators.ValidateCourier(courier)
+		err := validators.ValidateCourier(courier)
 		if err != nil {
 			return nil, &validators.ValidationError{
 				Message: "Validation failed for courier",
 				Data:    courier,
 			}
 		}
+	}
+
+	var query strings.Builder
+	query.WriteString("INSERT INTO couriers (type, working_areas, working_hours) VALUES ")
+
+	var values []interface{}
+	for i, courier := range couriers {
+		if i > 0 {
+			query.WriteString(", ")
+		}
+		query.WriteString(fmt.Sprintf("($%d, $%d, $%d)", i*3+1, i*3+2, i*3+3))
+		values = append(values, courier.CourierType, courier.WorkingAreas, courier.WorkingHours)
+	}
+
+	query.WriteString(" RETURNING id, type, working_areas, working_hours")
+
+	rows, err := db.Query(query.String(), values...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
 		var createdCourier models.Courier
-		err := stmt.QueryRow(courier.CourierType, courier.WorkingAreas, courier.WorkingHours).Scan(&createdCourier.CourierID, &createdCourier.CourierType, &createdCourier.WorkingAreas, &createdCourier.WorkingHours)
+		err := rows.Scan(&createdCourier.CourierID, &createdCourier.CourierType, &createdCourier.WorkingAreas, &createdCourier.WorkingHours)
 		if err != nil {
 			return nil, err
 		}
 		createdCouriers = append(createdCouriers, createdCourier)
 	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
 	return createdCouriers, nil
 }
