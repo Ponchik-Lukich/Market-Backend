@@ -1,5 +1,7 @@
 package models
 
+import "github.com/lib/pq"
+
 type CourierType string
 
 const (
@@ -9,23 +11,23 @@ const (
 )
 
 type Courier struct {
-	CourierID    int64       `json:"courier_id"`
-	CourierType  CourierType `json:"courier_type"`
-	WorkingAreas []int64     `json:"regions"`
-	WorkingHours []string    `json:"working_hours"`
+	CourierID    int64          `json:"courier_id" db:"id"`
+	CourierType  CourierType    `json:"courier_type" db:"type" `
+	WorkingAreas pq.Int64Array  `json:"regions" db:"working_areas"`
+	WorkingHours pq.StringArray `json:"working_hours" db:"working_hours"`
 }
 
 type CreateCourierDto struct {
-	CourierType  CourierType `json:"courier_type"`
-	Regions      []int       `json:"regions"`
-	WorkingHours []string    `json:"working_hours"`
+	CourierType  CourierType    `json:"courier_type" db:"type" `
+	WorkingAreas pq.Int64Array  `json:"regions" db:"working_areas"`
+	WorkingHours pq.StringArray `json:"working_hours" db:"working_hours"`
 }
 
 type CreateCourierRequest struct {
 	Couriers []CreateCourierDto `json:"couriers"`
 }
 
-type CreateCouriersResponse struct {
+type CreateCourierResponse struct {
 	Couriers []Courier `json:"couriers"`
 }
 

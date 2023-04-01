@@ -8,8 +8,12 @@ import (
 
 func SetupRoutes(e *echo.Echo, db *sqlx.DB) {
 	// Couriers
-	e.POST("/couriers", controllers.CreateCourier)
-	e.GET("/couriers/:courier_id", controllers.GetCourier)
+	e.POST("/couriers", func(c echo.Context) error {
+		return controllers.CreateCourier(c, db)
+	})
+	e.GET("/couriers/:courier_id", func(c echo.Context) error {
+		return controllers.GetCourierById(c, db)
+	})
 	e.GET("/couriers", func(c echo.Context) error {
 		return controllers.GetCouriers(c, db)
 	})

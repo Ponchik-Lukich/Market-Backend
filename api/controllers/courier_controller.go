@@ -1,32 +1,82 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"strconv"
 	"yandex-team.ru/bstask/api/models"
 	"yandex-team.ru/bstask/api/services"
+	"yandex-team.ru/bstask/api/utils/validators"
 )
 
 //TODO: Implement logic for courier controller
 
-func CreateCourier(c echo.Context) error {
-	// Implement logic for creating a courier
-
-	return c.String(200, "Courier created")
-}
-
-func GetCourier(c echo.Context) error {
-	// Implement logic for getting a specific courier
-	return c.String(200, "Courier found")
-}
-
-//func GetCouriers(c echo.Context) error {
-//	// Implement logic for getting all couriers
-//	// return couriers as json
-//	couriers, err := services.GetCouriers(db, 10, 0)
+//func CreateCourier(c echo.Context, db *sqlx.DB) error {
+//	var req models.CreateCourierRequest
+//	var res models.CreateCourierResponse
+//	var couriers []models.CreateCourierDto
+//
+//	if err := c.Bind(&req); err != nil {
+//		return echo.NewHTTPError(http.StatusBadRequest, models.BadRequestResponse{Error: "bad request"})
+//	}
+//	couriers = req.Couriers
+//	err := services.CreateCouriers(db, couriers)
+//	if err != nil {
+//		switch e := err.(type) {
+//		case *validators.ValidationError:
+//			return c.JSON(http.StatusBadRequest, models.BadRequestResponse{
+//				Error: fmt.Sprintf("Validation error for courier: %v", e.Data),
+//			})
+//		default:
+//			return echo.NewHTTPError(http.StatusInternalServerError, "Error creating couriers")
+//		}
+//	}
+//	// return array of created couriers as json
+//	return c.JSON(http.StatusOK, couriers)
 //}
+
+func CreateCourier(c echo.Context, db *sqlx.DB) error {
+	var req models.CreateCourierRequest
+	var res models.CreateCourierResponse
+
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, models.BadRequestResponse{Error: "bad request"})
+	}
+
+	createdCouriers, err := services.CreateCouriers(db, req.Couriers)
+	if err != nil {
+		switch e := err.(type) {
+		case *validators.ValidationError:
+			return c.JSON(http.StatusBadRequest, models.BadRequestResponse{
+				Error: fmt.Sprintf("Validation error for courier: %v", e.Data),
+			})
+		default:
+			return echo.NewHTTPError(http.StatusInternalServerError, "Error creating couriers")
+		}
+	}
+
+	res.Couriers = createdCouriers
+	// return array of created couriers as json
+	return c.JSON(http.StatusOK, res)
+}
+
+func GetCourierById(c echo.Context, db *sqlx.DB) error {
+	courierID, err := strconv.ParseInt(c.Param("courier_id"), 10, 64)
+	if err != nil || courierID < 0 {
+		badRequest := models.BadRequestResponse{Error: "bad request"}
+		return c.JSON(http.StatusBadRequest, badRequest)
+	}
+	courier, err := services.GetCourierById(db, courierID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error getting courier")
+	}
+	if courier == nil {
+		return c.JSON(http.StatusNotFound, models.NotFoundResponse{Error: "not found"})
+	}
+	return c.JSON(http.StatusOK, courier)
+}
 
 func GetCouriers(c echo.Context, db *sqlx.DB) error {
 	limitParam := c.QueryParam("limit")
@@ -54,10 +104,10 @@ func GetCouriers(c echo.Context, db *sqlx.DB) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error getting couriers")
 	}
-	var response models.GetCouriersResponse
-	response.Couriers = couriers
-	response.Limit = limit
-	response.Offset = offset
+	var res models.GetCouriersResponse
+	res.Couriers = couriers
+	res.Limit = limit
+	res.Offset = offset
 
-	return c.JSON(http.StatusOK, response)
+	return c.JSON(http.StatusOK, res)
 }
