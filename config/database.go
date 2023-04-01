@@ -41,7 +41,7 @@ func InitializeTables(db *sqlx.DB) error {
 		return err
 	}
 	folder := fmt.Sprintf("%s/%s/%s/%s", dir, "api", "models", "queries")
-	tables := []string{"couriers", "orders", "courier_work_shifts", "order_completion"}
+	tables := []string{"couriers", "orders", "order_completion"}
 
 	for _, table := range tables {
 		sql, err := os.ReadFile(fmt.Sprintf("%s/%s.sql", folder, table))

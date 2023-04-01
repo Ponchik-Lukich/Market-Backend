@@ -2,6 +2,7 @@ package services
 
 import (
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 	"yandex-team.ru/bstask/api/models"
 )
 
@@ -24,8 +25,9 @@ func GetCouriers(db *sqlx.DB, limit int, offset int) ([]models.Courier, error) {
 
 	for rows.Next() {
 		var courier models.Courier
-		err := rows.Scan(&courier.CourierID, &courier.CourierType, &courier.MaxWeight)
+		err := rows.Scan(&courier.CourierID, &courier.CourierType, pq.Array(&courier.WorkingAreas), pq.Array(&courier.WorkingHours))
 		if err != nil {
+			panic(err)
 			return nil, err
 		}
 		couriers = append(couriers, courier)

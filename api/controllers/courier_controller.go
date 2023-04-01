@@ -5,6 +5,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"strconv"
+	"yandex-team.ru/bstask/api/models"
 	"yandex-team.ru/bstask/api/services"
 )
 
@@ -44,13 +45,17 @@ func GetCouriers(c echo.Context, db *sqlx.DB) error {
 	if offsetParam != "" {
 		offset, _ = strconv.Atoi(offsetParam)
 	}
-
+	//
 	// Call the service function to get couriers
 	couriers, err := services.GetCouriers(db, limit, offset)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error getting couriers")
 	}
+	var response models.GetCouriersResponse
+	response.Couriers = couriers
+	response.Limit = limit
+	response.Offset = offset
 
 	// Return the couriers as JSON
-	return c.JSON(http.StatusOK, couriers)
+	return c.JSON(http.StatusOK, response)
 }
