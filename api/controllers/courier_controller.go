@@ -29,24 +29,27 @@ func GetCourier(c echo.Context) error {
 //}
 
 func GetCouriers(c echo.Context, db *sqlx.DB) error {
-	//db := c.Get("db").(*sqlx.DB)
-
-	// Get the limit and offset parameters if they are provided
 	limitParam := c.QueryParam("limit")
 	offsetParam := c.QueryParam("offset")
 
-	// Default values if limit and offset are not provided
 	limit := 10
 	offset := 0
 
 	if limitParam != "" {
-		limit, _ = strconv.Atoi(limitParam)
+		limit, err := strconv.Atoi(limitParam)
+		if err != nil || limit <= 0 {
+			badRequest := models.BadRequestResponse{Error: "bad request"}
+			return c.JSON(http.StatusBadRequest, badRequest)
+		}
 	}
 	if offsetParam != "" {
-		offset, _ = strconv.Atoi(offsetParam)
+		offset, err := strconv.Atoi(offsetParam)
+		if err != nil || offset < 0 {
+			badRequest := models.BadRequestResponse{Error: "bad request"}
+			return c.JSON(http.StatusBadRequest, badRequest)
+		}
 	}
-	//
-	// Call the service function to get couriers
+
 	couriers, err := services.GetCouriers(db, limit, offset)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error getting couriers")
@@ -56,6 +59,5 @@ func GetCouriers(c echo.Context, db *sqlx.DB) error {
 	response.Limit = limit
 	response.Offset = offset
 
-	// Return the couriers as JSON
 	return c.JSON(http.StatusOK, response)
 }

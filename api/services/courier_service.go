@@ -13,8 +13,6 @@ import (
 //}
 
 func GetCouriers(db *sqlx.DB, limit int, offset int) ([]models.Courier, error) {
-	//Implement logic for getting couriers from the database
-	println("In GetCouriers")
 	var couriers []models.Courier
 	query := `SELECT * FROM couriers LIMIT $1 OFFSET $2`
 	rows, err := db.Query(query, limit, offset)
