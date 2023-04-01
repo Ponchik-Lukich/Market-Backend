@@ -1,7 +1,12 @@
 package controllers
 
 import (
+	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
+	"net/http"
+	"strconv"
+	"yandex-team.ru/bstask/api/models"
+	"yandex-team.ru/bstask/api/services"
 )
 
 //TODO: Implement logic for order controller
@@ -11,20 +16,58 @@ func CreateOrder(c echo.Context) error {
 	return c.String(200, "Order created")
 }
 
-func GetOrder(c echo.Context) error {
-	// Implement logic for getting a specific order
-	return c.String(200, "Order found")
+func GetOrder(c echo.Context, db *sqlx.DB) error {
+	orderID, err := strconv.ParseInt(c.Param("order_id"), 10, 64)
+	if err != nil || orderID <= 0 {
+		badRequest := models.BadRequestResponse{Error: "bad request"}
+		return c.JSON(http.StatusBadRequest, badRequest)
+	}
+	order, err := services.GetOrderById(db, orderID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, models.InternalServerErrorResponse{
+			Error: "Error getting order",
+		})
+	}
+	if order == nil {
+		return c.JSON(http.StatusNotFound, models.NotFoundResponse{Error: "not found"})
+	}
+	return c.JSON(http.StatusOK, order)
 }
 
-func GetOrders(c echo.Context) error {
-	// Implement logic for getting all orders
-	// Returns information about all orders, as well as their additional information: order weight, delivery area, time intervals at which it is convenient to accept the order.
-	//The method has parameters `offset` and `limit` to provide paginated output.
-	//If:
-	//`offset` or `limit` are not passed, by default it should be assumed that `offset = 0`, `limit = 1`;
-	//no offers were found for the specified `offset` and `limit`, you need to return an empty list of `orders`.
+func GetOrders(c echo.Context, db *sqlx.DB) error {
+	limitParam := c.QueryParam("limit")
+	offsetParam := c.QueryParam("offset")
 
-	return c.String(200, "Orders found")
+	limit := 10
+	offset := 0
+
+	if limitParam != "" {
+		limit, err := strconv.Atoi(limitParam)
+		if err != nil || limit <= 0 {
+			badRequest := models.BadRequestResponse{Error: "bad request"}
+			return c.JSON(http.StatusBadRequest, badRequest)
+		}
+	}
+	if offsetParam != "" {
+		offset, err := strconv.Atoi(offsetParam)
+		if err != nil || offset < 0 {
+			badRequest := models.BadRequestResponse{Error: "bad request"}
+			return c.JSON(http.StatusBadRequest, badRequest)
+		}
+	}
+
+	orders, err := services.GetOrders(db, limit, offset)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, models.InternalServerErrorResponse{
+			Error: "Error getting orders",
+		})
+	}
+	var res models.GetOrderResponse
+	res.Orders = orders
+	res.Limit = limit
+	res.Offset = offset
+
+	return c.JSON(http.StatusOK, res)
 }
 
 func CompleteOrder(c echo.Context) error {

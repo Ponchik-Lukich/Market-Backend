@@ -31,7 +31,7 @@ type CreateCourierResponse struct {
 	Couriers []Courier `json:"couriers"`
 }
 
-type GetCouriersResponse struct {
+type GetCourierResponse struct {
 	Couriers []Courier `json:"couriers"`
 	Limit    int       `json:"limit"`
 	Offset   int       `json:"offset"`

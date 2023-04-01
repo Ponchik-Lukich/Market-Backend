@@ -13,6 +13,9 @@ func GetCourierById(db *sqlx.DB, courierID int64) (*models.Courier, error) {
 	query := `SELECT * FROM couriers WHERE id = $1`
 	err := db.Get(&courier, query, courierID)
 	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &courier, nil
@@ -24,38 +27,10 @@ func GetCouriers(db *sqlx.DB, limit int, offset int) ([]models.Courier, error) {
 	err := db.Select(&couriers, query, limit, offset)
 
 	if err != nil {
-		panic(err)
 		return nil, err
 	}
 	return couriers, nil
 }
-
-//func CreateCouriers(db *sqlx.DB, couriers []models.CreateCourierDto) ([]models.Courier, error) {
-//	var createdCouriers []models.Courier
-//	query := `INSERT INTO couriers (type, working_areas, working_hours) VALUES ($1, $2, $3) RETURNING id, type, working_areas, working_hours`
-//	stmt, err := db.Prepare(query)
-//	if err != nil {
-//		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Error preparing query")
-//	}
-//	defer stmt.Close()
-//
-//	for _, courier := range couriers {
-//		err = validators.ValidateCourier(courier)
-//		if err != nil {
-//			return nil, &validators.ValidationError{
-//				Message: "Validation failed for courier",
-//				Data:    courier,
-//			}
-//		}
-//		var createdCourier models.Courier
-//		err := stmt.QueryRow(courier.CourierType, courier.WorkingAreas, courier.WorkingHours).Scan(&createdCourier.CourierID, &createdCourier.CourierType, &createdCourier.WorkingAreas, &createdCourier.WorkingHours)
-//		if err != nil {
-//			return nil, err
-//		}
-//		createdCouriers = append(createdCouriers, createdCourier)
-//	}
-//	return createdCouriers, nil
-//}
 
 func CreateCouriers(db *sqlx.DB, couriers []models.CreateCourierDto) ([]models.Courier, error) {
 	createdCouriers := []models.Courier{}
@@ -106,3 +81,30 @@ func CreateCouriers(db *sqlx.DB, couriers []models.CreateCourierDto) ([]models.C
 
 	return createdCouriers, nil
 }
+
+//func CreateCouriers(db *sqlx.DB, couriers []models.CreateCourierDto) ([]models.Courier, error) {
+//	var createdCouriers []models.Courier
+//	query := `INSERT INTO couriers (type, working_areas, working_hours) VALUES ($1, $2, $3) RETURNING id, type, working_areas, working_hours`
+//	stmt, err := db.Prepare(query)
+//	if err != nil {
+//		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Error preparing query")
+//	}
+//	defer stmt.Close()
+//
+//	for _, courier := range couriers {
+//		err = validators.ValidateCourier(courier)
+//		if err != nil {
+//			return nil, &validators.ValidationError{
+//				Message: "Validation failed for courier",
+//				Data:    courier,
+//			}
+//		}
+//		var createdCourier models.Courier
+//		err := stmt.QueryRow(courier.CourierType, courier.WorkingAreas, courier.WorkingHours).Scan(&createdCourier.CourierID, &createdCourier.CourierType, &createdCourier.WorkingAreas, &createdCourier.WorkingHours)
+//		if err != nil {
+//			return nil, err
+//		}
+//		createdCouriers = append(createdCouriers, createdCourier)
+//	}
+//	return createdCouriers, nil
+//}

@@ -1,11 +1,11 @@
 CREATE TABLE IF NOT EXISTS orders
 (
-    id SERIAL PRIMARY KEY,
-    weight NUMERIC(10, 2) NOT NULL,
-    delivery_district INTEGER NOT NULL,
-    delivery_time VARCHAR(255) NOT NULL,
-    price NUMERIC(10, 2) NOT NULL,
-    courier_id INTEGER NULL,
+    id SERIAL PRIMARY KEY NOT NULL UNIQUE ,
+    weight FLOAT,
+    delivery_district INT,
+    delivery_hours TEXT[],
+    cost INT,
+    courier_id BIGINT NULL,
     assigned BOOLEAN NOT NULL DEFAULT FALSE,
     FOREIGN KEY (courier_id) REFERENCES couriers(id)
 );

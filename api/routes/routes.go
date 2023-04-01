@@ -19,8 +19,12 @@ func SetupRoutes(e *echo.Echo, db *sqlx.DB) {
 	})
 	// Orders
 	e.POST("/orders", controllers.CreateOrder)
-	e.GET("/orders/:order_id", controllers.GetOrder)
-	e.GET("/orders", controllers.GetOrders)
+	e.GET("/orders/:order_id", func(c echo.Context) error {
+		return controllers.GetOrder(c, db)
+	})
+	e.GET("/orders", func(c echo.Context) error {
+		return controllers.GetOrders(c, db)
+	})
 	e.POST("/orders/complete", controllers.CompleteOrder)
 
 	// Ping
