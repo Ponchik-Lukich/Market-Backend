@@ -10,7 +10,15 @@ import (
 
 func GetOrders(db *sqlx.DB, limit int, offset int) ([]models.Order, error) {
 	var orders []models.Order
-	query := `SELECT id, cost, delivery_hours, delivery_district, weight FROM orders LIMIT $1 OFFSET $2`
+	query := `SELECT orders.id,
+       orders.cost,
+       orders.delivery_hours,
+       orders.delivery_district,
+       orders.weight,
+       order_completion.completion_time
+FROM orders
+         FULL OUTER JOIN order_completion ON orders.id = order_completion.order_id
+LIMIT $1 OFFSET $2`
 	err := db.Select(&orders, query, limit, offset)
 	if err != nil {
 		return nil, err
@@ -53,14 +61,14 @@ func CreateOrders(db *sqlx.DB, orders []models.CreateOrderDto) ([]models.Order, 
 		if i > 0 {
 			query.WriteString(", ")
 		}
-		query.WriteString(fmt.Sprintf("($%d, $%d, $%d, $%d)", i*3+1, i*3+2, i*3+3, i*3+4))
+		query.WriteString(fmt.Sprintf("($%d, $%d, $%d, $%d)", i*4+1, i*4+2, i*4+3, i*4+4))
 		values = append(values, order.Cost, order.DeliveryHours, order.Regions, order.Weight)
 	}
 
 	query.WriteString(" RETURNING id, cost, delivery_hours, delivery_district, weight")
-
 	rows, err := db.Query(query.String(), values...)
 	if err != nil {
+		panic(err)
 		return nil, err
 	}
 	defer rows.Close()

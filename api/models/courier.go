@@ -18,7 +18,7 @@ type Courier struct {
 }
 
 type CreateCourierDto struct {
-	CourierType  CourierType    `json:"courier_type" db:"type" `
+	CourierType  CourierType    `json:"courier_type" db:"type"`
 	WorkingAreas pq.Int64Array  `json:"regions" db:"working_areas"`
 	WorkingHours pq.StringArray `json:"working_hours" db:"working_hours"`
 }
