@@ -11,8 +11,6 @@ func (e *ValidationOrderError) Error() string {
 	return e.Message
 }
 
-// TODO add validation
-
 func ValidateOrder(order models.CreateOrderDto) error {
 	if order.Weight <= 0 {
 		return &ValidationOrderError{
@@ -26,10 +24,21 @@ func ValidateOrder(order models.CreateOrderDto) error {
 			Data:    order,
 		}
 	}
-	if len(order.DeliveryHours) == 0 {
-		return &ValidationOrderError{
-			Message: "Order delivery hours is empty",
-			Data:    order,
+	set := map[string]struct{}{}
+	for i := 0; i < len(order.DeliveryHours); i++ {
+		if _, ok := set[order.DeliveryHours[i]]; ok {
+			return &ValidationOrderError{
+				Message: "Order delivery hours has duplicates",
+				Data:    order,
+			}
+		} else {
+			set[order.DeliveryHours[i]] = struct{}{}
+		}
+		if !ValidateTime(order.DeliveryHours[i]) {
+			return &ValidationOrderError{
+				Message: "Order delivery hour is invalid",
+				Data:    order,
+			}
 		}
 	}
 	return nil
