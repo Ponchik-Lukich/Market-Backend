@@ -68,7 +68,6 @@ func CreateOrders(db *sqlx.DB, orders []models.CreateOrderDto) ([]models.Order, 
 	query.WriteString(" RETURNING id, cost, delivery_hours, delivery_district, weight")
 	rows, err := db.Query(query.String(), values...)
 	if err != nil {
-		panic(err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -87,4 +86,58 @@ func CreateOrders(db *sqlx.DB, orders []models.CreateOrderDto) ([]models.Order, 
 	}
 
 	return createdOrders, nil
+}
+
+func CompleteOrder(db *sqlx.DB, orders []models.CompleteOrderDto) ([]models.Order, error) {
+	var completedOrders []models.Order
+	for _, order := range orders {
+		err := validators.ValidateCompleteOrder(order)
+		if err != nil {
+			return nil, &validators.ValidationCompleteOrderError{
+				Message: "Validation failed for completed order",
+				Data:    order,
+			}
+		}
+	}
+
+	var query strings.Builder
+	query.WriteString("INSERT INTO order_completion (order_id, courier_id, completion_time) VALUES ")
+	var values []interface{}
+	for i, order := range orders {
+		if i > 0 {
+			query.WriteString(", ")
+		}
+		query.WriteString(fmt.Sprintf("($%d, $%d, $%d)", i*3+1, i*3+2, i*3+3))
+		values = append(values, order.OrderID, order.CourierId, order.CompleteTime)
+	}
+
+	query.WriteString(" RETURNING order_id")
+	rows, err := db.Query(query.String(), values...)
+	if err != nil {
+		return nil, err
+	}
+	query.Reset()
+	query.WriteString("UPDATE orders SET assigned = TRUE WHERE id IN (")
+	defer rows.Close()
+	// update table orders with returned order_id and courier_id
+	i := 0
+	for rows.Next() {
+		var orderId int64
+		err := rows.Scan(&orderId)
+		if err != nil {
+			return nil, err
+		}
+		if i := len(completedOrders); i > 0 {
+			query.WriteString(", ")
+		}
+		query.WriteString(fmt.Sprintf("$%d", i+1))
+		values = append(values, orderId)
+		i++
+	}
+	query.WriteString(")")
+	_, err = db.Exec(query.String(), values...)
+	if err != nil {
+		return nil, err
+	}
+	return completedOrders, nil
 }

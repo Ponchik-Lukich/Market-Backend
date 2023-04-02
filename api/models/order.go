@@ -11,7 +11,7 @@ type Order struct {
 	DeliveryHours pq.StringArray `json:"delivery_hours" db:"delivery_hours"`
 	Regions       int            `json:"regions" db:"delivery_district"`
 	Weight        float64        `json:"weight" db:"weight"`
-	CompletedTime *time.Time     `json:"completed_time,omitempty" db:"completion_time,omitempty"`
+	CompleteTime  *time.Time     `json:"complete_time,omitempty" db:"complete_time,omitempty"`
 }
 
 type CreateOrderDto struct {
@@ -40,12 +40,12 @@ type OrderAssignResponse struct {
 	Couriers []CouriersGroupOrders `json:"couriers"`
 }
 
-type CompleteOrderRequestDto struct {
-	Orders []CompleteOrder `json:"orders"`
+type CompleteOrderRequest struct {
+	Orders []CompleteOrderDto `json:"complete_info"`
 }
 
-type CompleteOrder struct {
-	OrderID       int64      `json:"order_id" db:"id"`
-	CourierId     int64      `json:"courier_id" db:"courier_id"`
-	CompletedTime *time.Time `json:"completed_time" db:"completed_time"`
+type CompleteOrderDto struct {
+	OrderID      int64      `json:"order_id" db:"id"`
+	CourierId    int64      `json:"courier_id" db:"courier_id"`
+	CompleteTime *time.Time `json:"complete_time" db:"complete_time" time_format:"sql_date" time_utc:"true"`
 }

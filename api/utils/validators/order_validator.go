@@ -11,23 +11,25 @@ func (e *ValidationOrderError) Error() string {
 	return e.Message
 }
 
-func ValidateOrder(courier models.CreateOrderDto) error {
-	if courier.Weight <= 0 {
+// TODO add validation
+
+func ValidateOrder(order models.CreateOrderDto) error {
+	if order.Weight <= 0 {
 		return &ValidationOrderError{
 			Message: "Order weight is invalid",
-			Data:    courier,
+			Data:    order,
 		}
 	}
-	if courier.Cost <= 0 {
+	if order.Cost <= 0 {
 		return &ValidationOrderError{
 			Message: "Order cost is invalid",
-			Data:    courier,
+			Data:    order,
 		}
 	}
-	if len(courier.DeliveryHours) == 0 {
+	if len(order.DeliveryHours) == 0 {
 		return &ValidationOrderError{
 			Message: "Order delivery hours is empty",
-			Data:    courier,
+			Data:    order,
 		}
 	}
 	return nil

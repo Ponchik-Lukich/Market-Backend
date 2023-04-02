@@ -59,19 +59,19 @@ func GetOrder(c echo.Context, db *sqlx.DB) error {
 func GetOrders(c echo.Context, db *sqlx.DB) error {
 	limitParam := c.QueryParam("limit")
 	offsetParam := c.QueryParam("offset")
-
-	limit := 10
+	var err error
+	limit := 1
 	offset := 0
 
 	if limitParam != "" {
-		limit, err := strconv.Atoi(limitParam)
+		limit, err = strconv.Atoi(limitParam)
 		if err != nil || limit <= 0 {
 			badRequest := models.BadRequestResponse{Error: "bad request"}
 			return c.JSON(http.StatusBadRequest, badRequest)
 		}
 	}
 	if offsetParam != "" {
-		offset, err := strconv.Atoi(offsetParam)
+		offset, err = strconv.Atoi(offsetParam)
 		if err != nil || offset < 0 {
 			badRequest := models.BadRequestResponse{Error: "bad request"}
 			return c.JSON(http.StatusBadRequest, badRequest)
@@ -92,7 +92,26 @@ func GetOrders(c echo.Context, db *sqlx.DB) error {
 	return c.JSON(http.StatusOK, res)
 }
 
-func CompleteOrder(c echo.Context) error {
-	// Implement logic for completing an order
-	return c.String(200, "Order completed")
+func CompleteOrder(c echo.Context, db *sqlx.DB) error {
+	var req models.CompleteOrderRequest
+
+	if err := c.Bind(&req); err != nil {
+		panic(err)
+		return echo.NewHTTPError(http.StatusBadRequest, models.BadRequestResponse{Error: "bad request"})
+	}
+	completedOrders, err := services.CompleteOrder(db, req.Orders)
+	if err != nil {
+		switch e := err.(type) {
+		case *validators.ValidationCompleteOrderError:
+			return c.JSON(http.StatusBadRequest, models.BadRequestResponse{
+				Error: fmt.Sprintf("Validation error for orders: %v", e.Data),
+			})
+		default:
+			panic(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, models.InternalServerErrorResponse{
+				Error: "Error creating completed orders",
+			})
+		}
+	}
+	return c.JSON(http.StatusOK, completedOrders)
 }

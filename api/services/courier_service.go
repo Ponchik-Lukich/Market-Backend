@@ -46,37 +46,51 @@ func CreateCouriers(db *sqlx.DB, couriers []models.CreateCourierDto) ([]models.C
 		}
 	}
 
-	var query strings.Builder
-	query.WriteString("INSERT INTO couriers (type, working_areas, working_hours) VALUES ")
-
-	var values []interface{}
-	for i, courier := range couriers {
-		if i > 0 {
-			query.WriteString(", ")
+	// Split the couriers into chunks of size 30000
+	chunkSize := 21500
+	chunks := make([][]models.CreateCourierDto, 0)
+	for i := 0; i < len(couriers); i += chunkSize {
+		end := i + chunkSize
+		if end > len(couriers) {
+			end = len(couriers)
 		}
-		query.WriteString(fmt.Sprintf("($%d, $%d, $%d)", i*3+1, i*3+2, i*3+3))
-		values = append(values, courier.CourierType, courier.WorkingAreas, courier.WorkingHours)
+		chunks = append(chunks, couriers[i:end])
 	}
 
-	query.WriteString(" RETURNING id, type, working_areas, working_hours")
+	// Execute a separate insert statement for each chunk of couriers
+	for _, chunk := range chunks {
+		var query strings.Builder
+		query.WriteString("INSERT INTO couriers (type, working_areas, working_hours) VALUES ")
 
-	rows, err := db.Query(query.String(), values...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
+		var placeholders []string
+		var values []interface{}
+		for i, courier := range chunk {
+			placeholder := fmt.Sprintf("($%d, $%d, $%d)", i*3+1, i*3+2, i*3+3)
+			placeholders = append(placeholders, placeholder)
+			values = append(values, courier.CourierType, courier.WorkingAreas, courier.WorkingHours)
+		}
 
-	for rows.Next() {
-		var createdCourier models.Courier
-		err := rows.Scan(&createdCourier.CourierID, &createdCourier.CourierType, &createdCourier.WorkingAreas, &createdCourier.WorkingHours)
+		query.WriteString(strings.Join(placeholders, ", "))
+		query.WriteString(" RETURNING id, type, working_areas, working_hours")
+
+		rows, err := db.Query(query.String(), values...)
 		if err != nil {
 			return nil, err
 		}
-		createdCouriers = append(createdCouriers, createdCourier)
-	}
+		defer rows.Close()
 
-	if err := rows.Err(); err != nil {
-		return nil, err
+		for rows.Next() {
+			var createdCourier models.Courier
+			err := rows.Scan(&createdCourier.CourierID, &createdCourier.CourierType, &createdCourier.WorkingAreas, &createdCourier.WorkingHours)
+			if err != nil {
+				return nil, err
+			}
+			createdCouriers = append(createdCouriers, createdCourier)
+		}
+
+		if err := rows.Err(); err != nil {
+			return nil, err
+		}
 	}
 
 	return createdCouriers, nil

@@ -27,6 +27,7 @@ func CreateCourier(c echo.Context, db *sqlx.DB) error {
 				Error: fmt.Sprintf("Validation error for courier: %v", e.Data),
 			})
 		default:
+			panic(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, models.InternalServerErrorResponse{
 				Error: "Error creating couriers",
 			})
@@ -58,18 +59,19 @@ func GetCourierById(c echo.Context, db *sqlx.DB) error {
 func GetCouriers(c echo.Context, db *sqlx.DB) error {
 	limitParam := c.QueryParam("limit")
 	offsetParam := c.QueryParam("offset")
+	var err error
 
-	limit := 10
+	limit := 1
 	offset := 0
 
 	if limitParam != "" {
-		limit, err := strconv.Atoi(limitParam)
+		limit, err = strconv.Atoi(limitParam)
 		if err != nil || limit <= 0 {
 			return c.JSON(http.StatusBadRequest, models.BadRequestResponse{Error: "bad request"})
 		}
 	}
 	if offsetParam != "" {
-		offset, err := strconv.Atoi(offsetParam)
+		offset, err = strconv.Atoi(offsetParam)
 		if err != nil || offset < 0 {
 			return c.JSON(http.StatusBadRequest, models.BadRequestResponse{Error: "bad request"})
 		}
