@@ -47,5 +47,5 @@ type CompleteOrderRequest struct {
 type CompleteOrderDto struct {
 	OrderID      int64      `json:"order_id" db:"id"`
 	CourierId    int64      `json:"courier_id" db:"courier_id"`
-	CompleteTime *time.Time `json:"complete_time" db:"complete_time" time_format:"sql_date" time_utc:"true"`
+	CompleteTime *time.Time `json:"complete_time" db:"complete_time"`
 }

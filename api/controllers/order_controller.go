@@ -96,7 +96,6 @@ func CompleteOrder(c echo.Context, db *sqlx.DB) error {
 	var req models.CompleteOrderRequest
 
 	if err := c.Bind(&req); err != nil {
-		panic(err)
 		return echo.NewHTTPError(http.StatusBadRequest, models.BadRequestResponse{Error: "bad request"})
 	}
 	completedOrders, err := services.CompleteOrder(db, req.Orders)
@@ -107,7 +106,6 @@ func CompleteOrder(c echo.Context, db *sqlx.DB) error {
 				Error: fmt.Sprintf("Validation error for orders: %v", e.Data),
 			})
 		default:
-			panic(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, models.InternalServerErrorResponse{
 				Error: "Error creating completed orders",
 			})

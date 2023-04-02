@@ -3,6 +3,7 @@ package services
 import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 	"strings"
 	"yandex-team.ru/bstask/api/models"
 	"yandex-team.ru/bstask/api/utils/validators"
@@ -91,8 +92,7 @@ func CreateOrders(db *sqlx.DB, orders []models.CreateOrderDto) ([]models.Order, 
 func CompleteOrder(db *sqlx.DB, orders []models.CompleteOrderDto) ([]models.Order, error) {
 	var completedOrders []models.Order
 	for _, order := range orders {
-		err := validators.ValidateCompleteOrder(order)
-		if err != nil {
+		if err := validators.ValidateCompleteOrder(order); err != nil {
 			return nil, &validators.ValidationCompleteOrderError{
 				Message: "Validation failed for completed order",
 				Data:    order,
@@ -100,44 +100,54 @@ func CompleteOrder(db *sqlx.DB, orders []models.CompleteOrderDto) ([]models.Orde
 		}
 	}
 
-	var query strings.Builder
-	query.WriteString("INSERT INTO order_completion (order_id, courier_id, completion_time) VALUES ")
-	var values []interface{}
-	for i, order := range orders {
-		if i > 0 {
-			query.WriteString(", ")
-		}
-		query.WriteString(fmt.Sprintf("($%d, $%d, $%d)", i*3+1, i*3+2, i*3+3))
-		values = append(values, order.OrderID, order.CourierId, order.CompleteTime)
-	}
-
-	query.WriteString(" RETURNING order_id")
-	rows, err := db.Query(query.String(), values...)
+	tx, err := db.Beginx()
 	if err != nil {
 		return nil, err
 	}
-	query.Reset()
-	query.WriteString("UPDATE orders SET assigned = TRUE WHERE id IN (")
-	defer rows.Close()
-	// update table orders with returned order_id and courier_id
-	i := 0
-	for rows.Next() {
-		var orderId int64
-		err := rows.Scan(&orderId)
-		if err != nil {
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p)
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			tx.Commit()
+		}
+	}()
+
+	// Insert into order_completion table
+	query := `INSERT INTO order_completion (order_id, courier_id, complete_time) VALUES ($1, $2, $3)`
+	for _, order := range orders {
+		if _, err := tx.Exec(query, order.OrderID, order.CourierId, order.CompleteTime); err != nil {
 			return nil, err
 		}
-		if i := len(completedOrders); i > 0 {
-			query.WriteString(", ")
-		}
-		query.WriteString(fmt.Sprintf("$%d", i+1))
-		values = append(values, orderId)
-		i++
 	}
-	query.WriteString(")")
-	_, err = db.Exec(query.String(), values...)
+
+	// Update assigned field in orders table
+	query = `UPDATE orders SET assigned = true WHERE id = ANY($1) RETURNING id, cost, delivery_hours, delivery_district, weight`
+	var orderIDs []int64
+	for _, order := range orders {
+		orderIDs = append(orderIDs, order.OrderID)
+	}
+	rows, err := tx.Queryx(query, pq.Array(orderIDs))
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var completedOrder models.Order
+		if err := rows.StructScan(&completedOrder); err != nil {
+			return nil, err
+		}
+		for _, order := range orders {
+			if order.OrderID == completedOrder.OrderID {
+				completedOrder.CompleteTime = order.CompleteTime
+				break
+			}
+		}
+		completedOrders = append(completedOrders, completedOrder)
+	}
+
 	return completedOrders, nil
 }
