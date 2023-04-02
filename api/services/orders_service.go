@@ -54,36 +54,61 @@ func CreateOrders(db *sqlx.DB, orders []models.CreateOrderDto) ([]models.Order, 
 		}
 	}
 
-	var query strings.Builder
-	query.WriteString("INSERT INTO orders (cost, delivery_hours, delivery_district, weight) VALUES ")
-
-	var values []interface{}
-	for i, order := range orders {
-		if i > 0 {
-			query.WriteString(", ")
-		}
-		query.WriteString(fmt.Sprintf("($%d, $%d, $%d, $%d)", i*4+1, i*4+2, i*4+3, i*4+4))
-		values = append(values, order.Cost, order.DeliveryHours, order.Regions, order.Weight)
-	}
-
-	query.WriteString(" RETURNING id, cost, delivery_hours, delivery_district, weight")
-	rows, err := db.Query(query.String(), values...)
+	tx, err := db.Beginx()
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p)
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			tx.Commit()
+		}
+	}()
 
-	for rows.Next() {
-		var createdOrder models.Order
-		err := rows.Scan(&createdOrder.OrderID, &createdOrder.Cost, &createdOrder.DeliveryHours, &createdOrder.Regions, &createdOrder.Weight)
+	chunkSize := 21000
+	for i := 0; i < len(orders); i += chunkSize {
+		end := i + chunkSize
+		if end > len(orders) {
+			end = len(orders)
+		}
+		chunk := orders[i:end]
+
+		var query strings.Builder
+		query.WriteString("INSERT INTO orders (cost, delivery_hours, delivery_district, weight) VALUES ")
+
+		var placeholders []string
+		var values []interface{}
+		for i, order := range chunk {
+			placeholder := fmt.Sprintf("($%d, $%d, $%d, $%d)", i*4+1, i*4+2, i*4+3, i*4+4)
+			placeholders = append(placeholders, placeholder)
+			values = append(values, order.Cost, order.DeliveryHours, order.Regions, order.Weight)
+		}
+
+		query.WriteString(strings.Join(placeholders, ", "))
+		query.WriteString(" RETURNING id, cost, delivery_hours, delivery_district, weight")
+
+		rows, err := tx.Query(query.String(), values...)
 		if err != nil {
 			return nil, err
 		}
-		createdOrders = append(createdOrders, createdOrder)
-	}
+		defer rows.Close()
 
-	if err := rows.Err(); err != nil {
-		return nil, err
+		for rows.Next() {
+			var createdOrder models.Order
+			err := rows.Scan(&createdOrder.OrderID, &createdOrder.Cost, &createdOrder.DeliveryHours, &createdOrder.Regions, &createdOrder.Weight)
+			if err != nil {
+				return nil, err
+			}
+			createdOrders = append(createdOrders, createdOrder)
+		}
+
+		if err := rows.Err(); err != nil {
+			return nil, err
+		}
 	}
 
 	return createdOrders, nil
