@@ -18,7 +18,9 @@ func SetupRoutes(e *echo.Echo, db *sqlx.DB) {
 		return controllers.GetCouriers(c, db)
 	})
 	// Orders
-	e.POST("/orders", controllers.CreateOrder)
+	e.POST("/orders", func(c echo.Context) error {
+		return controllers.CreateOrder(c, db)
+	})
 	e.GET("/orders/:order_id", func(c echo.Context) error {
 		return controllers.GetOrder(c, db)
 	})

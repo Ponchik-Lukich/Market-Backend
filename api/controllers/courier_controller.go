@@ -22,7 +22,7 @@ func CreateCourier(c echo.Context, db *sqlx.DB) error {
 	createdCouriers, err := services.CreateCouriers(db, req.Couriers)
 	if err != nil {
 		switch e := err.(type) {
-		case *validators.ValidationError:
+		case *validators.ValidationCourierError:
 			return c.JSON(http.StatusBadRequest, models.BadRequestResponse{
 				Error: fmt.Sprintf("Validation error for courier: %v", e.Data),
 			})
@@ -101,7 +101,7 @@ func GetCouriers(c echo.Context, db *sqlx.DB) error {
 //	err := services.CreateCouriers(db, couriers)
 //	if err != nil {
 //		switch e := err.(type) {
-//		case *validators.ValidationError:
+//		case *validators.ValidationCourierError:
 //			return c.JSON(http.StatusBadRequest, models.BadRequestResponse{
 //				Error: fmt.Sprintf("Validation error for courier: %v", e.Data),
 //			})

@@ -1,19 +1,41 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"strconv"
 	"yandex-team.ru/bstask/api/models"
 	"yandex-team.ru/bstask/api/services"
+	"yandex-team.ru/bstask/api/utils/validators"
 )
 
 //TODO: Implement logic for order controller
 
-func CreateOrder(c echo.Context) error {
-	// Implement logic for creating an order
-	return c.String(200, "Order created")
+func CreateOrder(c echo.Context, db *sqlx.DB) error {
+	var req models.CreateOrderRequest
+	var res models.CreateOrderResponse
+
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, models.BadRequestResponse{Error: "bad request"})
+	}
+
+	createdOrders, err := services.CreateOrders(db, req.Orders)
+	if err != nil {
+		switch e := err.(type) {
+		case *validators.ValidationCourierError:
+			return c.JSON(http.StatusBadRequest, models.BadRequestResponse{
+				Error: fmt.Sprintf("Validation error for courier: %v", e.Data),
+			})
+		default:
+			return echo.NewHTTPError(http.StatusInternalServerError, models.InternalServerErrorResponse{
+				Error: "Error creating couriers",
+			})
+		}
+	}
+	res.Orders = createdOrders
+	return c.JSON(http.StatusOK, res)
 }
 
 func GetOrder(c echo.Context, db *sqlx.DB) error {

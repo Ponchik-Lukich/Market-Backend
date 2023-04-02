@@ -24,6 +24,10 @@ type CreateOrderRequest struct {
 	Orders []CreateOrderDto `json:"orders"`
 }
 
+type CreateOrderResponse struct {
+	Orders []Order `json:"orders"`
+}
+
 type GetOrderResponse struct {
 	Orders []Order `json:"orders"`
 	Limit  int     `json:"limit"`

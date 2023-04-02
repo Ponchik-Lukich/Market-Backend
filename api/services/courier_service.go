@@ -33,13 +33,13 @@ func GetCouriers(db *sqlx.DB, limit int, offset int) ([]models.Courier, error) {
 }
 
 func CreateCouriers(db *sqlx.DB, couriers []models.CreateCourierDto) ([]models.Courier, error) {
-	createdCouriers := []models.Courier{}
+	var createdCouriers []models.Courier
 
 	// Validate couriers
 	for _, courier := range couriers {
 		err := validators.ValidateCourier(courier)
 		if err != nil {
-			return nil, &validators.ValidationError{
+			return nil, &validators.ValidationCourierError{
 				Message: "Validation failed for courier",
 				Data:    courier,
 			}
@@ -94,7 +94,7 @@ func CreateCouriers(db *sqlx.DB, couriers []models.CreateCourierDto) ([]models.C
 //	for _, courier := range couriers {
 //		err = validators.ValidateCourier(courier)
 //		if err != nil {
-//			return nil, &validators.ValidationError{
+//			return nil, &validators.ValidationCourierError{
 //				Message: "Validation failed for courier",
 //				Data:    courier,
 //			}
