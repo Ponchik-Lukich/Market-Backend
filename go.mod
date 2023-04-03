@@ -6,6 +6,7 @@ require (
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/labstack/echo/v4 v4.10.2
 	github.com/lib/pq v1.2.0
+	golang.org/x/time v0.3.0
 )
 
 require (
