@@ -70,13 +70,17 @@ func GetCouriers(c echo.Context, db *sqlx.DB) error {
 	if limitParam != "" {
 		limit, err = strconv.Atoi(limitParam)
 		if err != nil || limit <= 0 {
-			return c.JSON(http.StatusBadRequest, models.BadRequestResponse{Error: "bad request"})
+			return c.JSON(http.StatusBadRequest, models.BadRequestResponse{
+				Error:   "bad request",
+				Message: "limit must be a positive integer"})
 		}
 	}
 	if offsetParam != "" {
 		offset, err = strconv.Atoi(offsetParam)
 		if err != nil || offset < 0 {
-			return c.JSON(http.StatusBadRequest, models.BadRequestResponse{Error: "bad request"})
+			return c.JSON(http.StatusBadRequest, models.BadRequestResponse{
+				Error:   "bad request",
+				Message: "offset must be a positive integer"})
 		}
 	}
 
