@@ -102,6 +102,36 @@ func GetCouriers(c echo.Context, db *sqlx.DB) error {
 	return c.JSON(http.StatusOK, res)
 }
 
+func GetCourierMetaInfo(c echo.Context, db *sqlx.DB) error {
+	courierID, err := strconv.ParseInt(c.Param("courier_id"), 10, 64)
+	if err != nil || courierID <= 0 {
+		badRequest := models.BadRequestResponse{
+			Error:   "bad request",
+			Message: "courier_id must be a positive integer",
+		}
+		return c.JSON(http.StatusBadRequest, badRequest)
+	}
+	startDate := c.QueryParam("startDate")
+	endDate := c.QueryParam("endDate")
+	if startDate == "" || endDate == "" {
+		badRequest := models.BadRequestResponse{
+			Error:   "bad request",
+			Message: "startDate and endDate must be specified",
+		}
+		return c.JSON(http.StatusBadRequest, badRequest)
+	}
+	courier, err := services.GetCourierMetaInfo(db, courierID, startDate, endDate)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, models.InternalServerErrorResponse{
+			Error: "Error getting courier",
+		})
+	}
+	if courier == nil {
+		return nil
+	}
+	return c.JSON(http.StatusOK, courier)
+}
+
 //func CreateCourier(c echo.Context, db *sqlx.DB) error {
 //	var req models.CreateCourierRequest
 //	var res models.CreateCourierResponse

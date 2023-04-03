@@ -109,7 +109,7 @@ func CreateOrders(db *sqlx.DB, orders []models.CreateOrderDto) ([]models.Order, 
 func CompleteOrder(db *sqlx.DB, orders []models.CompleteOrderDto) ([]models.Order, error) {
 	var completedOrders []models.Order
 	for _, order := range orders {
-		if err := validators.ValidateCompleteOrder(order); err != nil {
+		if err := validators.ValidateCompleteOrder(db, order); err != nil {
 			return nil, err
 		}
 	}

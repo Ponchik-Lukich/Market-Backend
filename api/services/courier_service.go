@@ -2,6 +2,7 @@ package services
 
 import (
 	"github.com/jmoiron/sqlx"
+	"time"
 	"yandex-team.ru/bstask/api/models"
 	"yandex-team.ru/bstask/api/utils/validators"
 )
@@ -29,71 +30,6 @@ func GetCouriers(db *sqlx.DB, limit int, offset int) ([]models.Courier, error) {
 	}
 	return couriers, nil
 }
-
-//
-//func CreateCouriers(db *sqlx.DB, couriers []models.CreateCourierDto) ([]models.Courier, error) {
-//	var createdCouriers []models.Courier
-//
-//	// Validate couriers
-//	for _, courier := range couriers {
-//		err := validators.ValidateCourier(courier)
-//		if err != nil {
-//			return nil, &validators.ValidationCourierError{
-//				Message: "Validation failed for courier",
-//				Data:    courier,
-//			}
-//		}
-//	}
-//
-//	// Split the couriers into chunks of size 30000
-//	chunkSize := 21500
-//	chunks := make([][]models.CreateCourierDto, 0)
-//	for i := 0; i < len(couriers); i += chunkSize {
-//		end := i + chunkSize
-//		if end > len(couriers) {
-//			end = len(couriers)
-//		}
-//		chunks = append(chunks, couriers[i:end])
-//	}
-//
-//	// Execute a separate insert statement for each chunk of couriers
-//	for _, chunk := range chunks {
-//		var query strings.Builder
-//		query.WriteString("INSERT INTO couriers (type, working_areas, working_hours) VALUES ")
-//
-//		var placeholders []string
-//		var values []interface{}
-//		for i, courier := range chunk {
-//			placeholder := fmt.Sprintf("($%d, $%d, $%d)", i*3+1, i*3+2, i*3+3)
-//			placeholders = append(placeholders, placeholder)
-//			values = append(values, courier.CourierType, courier.WorkingAreas, courier.WorkingHours)
-//		}
-//
-//		query.WriteString(strings.Join(placeholders, ", "))
-//		query.WriteString(" RETURNING id, type, working_areas, working_hours")
-//
-//		rows, err := db.Query(query.String(), values...)
-//		if err != nil {
-//			return nil, err
-//		}
-//		defer rows.Close()
-//
-//		for rows.Next() {
-//			var createdCourier models.Courier
-//			err := rows.Scan(&createdCourier.CourierID, &createdCourier.CourierType, &createdCourier.WorkingAreas, &createdCourier.WorkingHours)
-//			if err != nil {
-//				return nil, err
-//			}
-//			createdCouriers = append(createdCouriers, createdCourier)
-//		}
-//
-//		if err := rows.Err(); err != nil {
-//			return nil, err
-//		}
-//	}
-//
-//	return createdCouriers, nil
-//}
 
 func CreateCouriers(db *sqlx.DB, couriers []models.CreateCourierDto) ([]models.Courier, error) {
 	var createdCouriers []models.Courier
@@ -148,4 +84,41 @@ func CreateCouriers(db *sqlx.DB, couriers []models.CreateCourierDto) ([]models.C
 	}
 
 	return createdCouriers, nil
+}
+
+func GetCourierMetaInfo(db *sqlx.DB, courierID int64, startDate string, endDate string) (*models.GetCourierMetaInfoResponse, error) {
+	var courierMetaInfo models.GetCourierMetaInfoResponse
+	startDate = startDate + " 00:00:00"
+	endDate = endDate + " 23:59:59"
+	layout := "2006-01-02 15:04:05"
+	start, _ := time.Parse(layout, startDate)
+	end, _ := time.Parse(layout, endDate)
+	duration := end.Sub(start)
+	hours := int(duration.Hours())
+	query := `SELECT с.id,
+       с.type,
+       с.working_areas,
+       с.working_hours,
+       SUM(o.cost) AS earnings,
+       COUNT(o.id) / $1 AS completed_orders
+FROM couriers с
+         JOIN orders o ON с.id = o.courier_id
+         JOIN order_completion oc ON o.id = oc.order_id
+WHERE o.courier_id = $2 
+  AND  oc.completion_time >= $3
+  AND oc.completion_time < $4
+GROUP BY с.id, с.type, с.working_areas, с.working_hours`
+	err := db.Get(&courierMetaInfo, query, hours, courierID, startDate, endDate)
+	if err != nil {
+		return nil, err
+	}
+	switch courierMetaInfo.CourierType {
+	case models.FOOT:
+		courierMetaInfo.Earnings = courierMetaInfo.Earnings * 2
+	case models.BIKE:
+		courierMetaInfo.Earnings = courierMetaInfo.Earnings * 3
+	case models.AUTO:
+		courierMetaInfo.Earnings = courierMetaInfo.Earnings * 4
+	}
+	return &courierMetaInfo, nil
 }

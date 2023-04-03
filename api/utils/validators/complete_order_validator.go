@@ -1,6 +1,9 @@
 package validators
 
-import "yandex-team.ru/bstask/api/models"
+import (
+	"github.com/jmoiron/sqlx"
+	"yandex-team.ru/bstask/api/models"
+)
 
 type ValidationCompleteOrderError struct {
 	Message string
@@ -11,26 +14,39 @@ func (e *ValidationCompleteOrderError) Error() string {
 	return e.Message
 }
 
-// TODO add validation
-
-func ValidateCompleteOrder(order models.CompleteOrderDto) error {
+func ValidateCompleteOrder(db *sqlx.DB, order models.CompleteOrderDto) error {
 	if order.OrderID <= 0 {
 		return &ValidationCompleteOrderError{
-			Message: "Order weight is invalid",
+			Message: "Order id is invalid",
 			Data:    order,
 		}
 	}
-	//if order.CompleteTime <= 0 {
-	//	return &ValidationCompleteOrderError{
-	//		Message: "Order cost is invalid",
-	//		Data:    order,
-	//	}
-	//}
-	//if len(order.DeliveryHours) == 0 {
-	//	return &ValidationCompleteOrderError{
-	//		Message: "Order delivery hours is empty",
-	//		Data:    order,
-	//	}
-	//}
+	if order.CourierId <= 0 {
+		return &ValidationCompleteOrderError{
+			Message: "Courier id is invalid",
+			Data:    order,
+		}
+	}
+	if order.CompleteTime == nil {
+		return &ValidationCompleteOrderError{
+			Message: "Complete time is invalid",
+			Data:    order,
+		}
+	}
+	var assigned bool
+	query := `SELECT assigned FROM orders WHERE id = $1`
+	err := db.Get(&assigned, query, order.OrderID)
+	if err != nil {
+		return &ValidationCompleteOrderError{
+			Message: "Order not found",
+			Data:    order,
+		}
+	} else if assigned {
+		return &ValidationCompleteOrderError{
+			Message: "Order already completed",
+			Data:    order,
+		}
+	}
+
 	return nil
 }

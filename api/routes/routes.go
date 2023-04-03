@@ -17,6 +17,10 @@ func SetupRoutes(e *echo.Echo, db *sqlx.DB) {
 	e.GET("/couriers", func(c echo.Context) error {
 		return controllers.GetCouriers(c, db)
 	})
+	e.GET("/couriers/meta-info/:courier_id", func(c echo.Context) error {
+		return controllers.GetCourierMetaInfo(c, db)
+	})
+
 	// Orders
 	e.POST("/orders", func(c echo.Context) error {
 		return controllers.CreateOrder(c, db)
