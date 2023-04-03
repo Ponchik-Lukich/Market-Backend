@@ -11,7 +11,7 @@ import (
 
 func GetOrders(db *sqlx.DB, limit int, offset int) ([]models.Order, error) {
 	var orders []models.Order
-	query := `SELECT orders.id, orders.cost, orders.delivery_hours, orders.delivery_district, orders.weight, order_completion.completion_time
+	query := `SELECT orders.id, orders.cost, orders.delivery_hours, orders.delivery_district, orders.weight, order_completion.complete_time
 FROM orders
          FULL OUTER JOIN order_completion ON orders.id = order_completion.order_id
 LIMIT $1 OFFSET $2`

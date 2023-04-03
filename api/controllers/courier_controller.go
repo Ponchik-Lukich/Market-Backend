@@ -91,7 +91,11 @@ func GetCouriers(c echo.Context, db *sqlx.DB) error {
 		})
 	}
 	var res models.GetCourierResponse
-	res.Couriers = couriers
+	if len(couriers) == 0 {
+		res.Couriers = []models.Courier{}
+	} else {
+		res.Couriers = couriers
+	}
 	res.Limit = limit
 	res.Offset = offset
 

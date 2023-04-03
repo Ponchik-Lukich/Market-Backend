@@ -26,12 +26,12 @@ func CreateOrder(c echo.Context, db *sqlx.DB) error {
 		switch e := err.(type) {
 		case *validators.ValidationCourierError:
 			return c.JSON(http.StatusBadRequest, models.BadRequestResponse{
-				Error:   fmt.Sprintf("Validation error for courier: %v", e.Data),
+				Error:   fmt.Sprintf("Validation error for order: %v", e.Data),
 				Message: e.Message,
 			})
 		default:
 			return echo.NewHTTPError(http.StatusInternalServerError, models.InternalServerErrorResponse{
-				Error: "Error creating couriers",
+				Error: "Error creating orders",
 			})
 		}
 	}
@@ -89,7 +89,11 @@ func GetOrders(c echo.Context, db *sqlx.DB) error {
 		})
 	}
 	var res models.GetOrderResponse
-	res.Orders = orders
+	if len(orders) == 0 {
+		res.Orders = []models.Order{}
+	} else {
+		res.Orders = orders
+	}
 	res.Limit = limit
 	res.Offset = offset
 

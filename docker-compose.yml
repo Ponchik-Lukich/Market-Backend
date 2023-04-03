@@ -19,10 +19,10 @@ services:
   db:
     container_name: db
     image: postgres:15.2-alpine
+    ports:
+      - "5432:5432"
     environment:
       - POSTGRES_PASSWORD=password
-    networks:
-      - enrollment
 
 networks:
   enrollment:
