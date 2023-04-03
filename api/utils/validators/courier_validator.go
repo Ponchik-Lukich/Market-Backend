@@ -1,8 +1,6 @@
 package validators
 
 import (
-	"fmt"
-	"regexp"
 	"yandex-team.ru/bstask/api/models"
 )
 
@@ -13,28 +11,6 @@ type ValidationCourierError struct {
 
 func (e *ValidationCourierError) Error() string {
 	return e.Message
-}
-
-func ValidateTime(time string) bool {
-	re := regexp.MustCompile(`^[0-9][0-9]:[0-9][0-9]-[0-9][0-9]:[0-9][0-9]$`)
-	if re.MatchString(time) {
-		var startHour, startMinute, endHour, endMinute int
-		_, err := fmt.Sscanf(time, "%d:%d-%d:%d", &startHour, &startMinute, &endHour, &endMinute)
-		if err != nil {
-			return false
-		}
-		if startHour < 0 || startHour > 23 || endHour < 0 || endHour > 23 || startMinute < 0 || startMinute > 59 || endMinute < 0 || endMinute > 59 {
-			return false
-		} else {
-			if startHour > endHour || (startHour == endHour && (startMinute > endMinute || startMinute == endMinute)) {
-				return false
-			} else {
-				return true
-			}
-		}
-	} else {
-		return false
-	}
 }
 
 func ValidateCourier(courier models.CreateCourierDto) error {
@@ -61,7 +37,7 @@ func ValidateCourier(courier models.CreateCourierDto) error {
 			}
 		}
 	}
-
+	var intervals []string
 	setHours := map[string]struct{}{}
 	for i := 0; i < len(courier.WorkingHours); i++ {
 		if _, ok := setHours[courier.WorkingHours[i]]; ok {
@@ -77,6 +53,13 @@ func ValidateCourier(courier models.CreateCourierDto) error {
 				Message: "Courier working hour is invalid",
 				Data:    courier,
 			}
+		}
+		intervals = append(intervals, courier.WorkingHours[i])
+	}
+	if !ValidateTimeIntervals(intervals) {
+		return &ValidationCourierError{
+			Message: "Courier working hours are overlapping",
+			Data:    courier,
 		}
 	}
 	return nil

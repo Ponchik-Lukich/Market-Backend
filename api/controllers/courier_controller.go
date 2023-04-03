@@ -24,10 +24,10 @@ func CreateCourier(c echo.Context, db *sqlx.DB) error {
 		switch e := err.(type) {
 		case *validators.ValidationCourierError:
 			return c.JSON(http.StatusBadRequest, models.BadRequestResponse{
-				Error: fmt.Sprintf("Validation error for courier: %v", e.Data),
+				Error:   fmt.Sprintf("Validation error for courier: %v", e.Data),
+				Message: e.Message,
 			})
 		default:
-			panic(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, models.InternalServerErrorResponse{
 				Error: "Error creating couriers",
 			})
@@ -41,7 +41,10 @@ func CreateCourier(c echo.Context, db *sqlx.DB) error {
 func GetCourierById(c echo.Context, db *sqlx.DB) error {
 	courierID, err := strconv.ParseInt(c.Param("courier_id"), 10, 64)
 	if err != nil || courierID <= 0 {
-		badRequest := models.BadRequestResponse{Error: "bad request"}
+		badRequest := models.BadRequestResponse{
+			Error:   "bad request",
+			Message: "courier_id must be a positive integer",
+		}
 		return c.JSON(http.StatusBadRequest, badRequest)
 	}
 	courier, err := services.GetCourierById(db, courierID)

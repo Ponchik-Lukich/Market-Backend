@@ -69,7 +69,7 @@ func CreateOrders(db *sqlx.DB, orders []models.CreateOrderDto) ([]models.Order, 
 		}
 	}()
 
-	chunkSize := 21000
+	chunkSize := 16382
 	for i := 0; i < len(orders); i += chunkSize {
 		end := i + chunkSize
 		if end > len(orders) {

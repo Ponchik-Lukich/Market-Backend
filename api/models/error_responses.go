@@ -1,7 +1,8 @@
 package models
 
 type BadRequestResponse struct {
-	Error string `json:"error"`
+	Error   string `json:"error"`
+	Message string `json:"message,omitempty"`
 }
 
 type NotFoundResponse struct {

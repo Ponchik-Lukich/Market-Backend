@@ -97,14 +97,10 @@ func GetCouriers(db *sqlx.DB, limit int, offset int) ([]models.Courier, error) {
 
 func CreateCouriers(db *sqlx.DB, couriers []models.CreateCourierDto) ([]models.Courier, error) {
 	var createdCouriers []models.Courier
-
 	// Validate couriers
 	for _, courier := range couriers {
 		if err := validators.ValidateCourier(courier); err != nil {
-			return nil, &validators.ValidationCourierError{
-				Message: "Validation failed for courier",
-				Data:    courier,
-			}
+			return nil, err
 		}
 	}
 
@@ -123,7 +119,7 @@ func CreateCouriers(db *sqlx.DB, couriers []models.CreateCourierDto) ([]models.C
 		}
 	}()
 
-	chunkSize := 21000
+	chunkSize := 21845
 	for i := 0; i < len(couriers); i += chunkSize {
 		end := i + chunkSize
 		if end > len(couriers) {
@@ -131,7 +127,6 @@ func CreateCouriers(db *sqlx.DB, couriers []models.CreateCourierDto) ([]models.C
 		}
 		chunk := couriers[i:end]
 
-		// Execute a single insert statement for the chunk of couriers
 		query := `INSERT INTO couriers (type, working_areas, working_hours) VALUES (:type, :working_areas, :working_hours) RETURNING id, type, working_areas, working_hours`
 		rows, err := tx.NamedQuery(query, chunk)
 		if err != nil {
