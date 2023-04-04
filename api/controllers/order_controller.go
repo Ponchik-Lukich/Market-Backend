@@ -24,10 +24,11 @@ func CreateOrder(c echo.Context, db *sqlx.DB) error {
 	createdOrders, err := services.CreateOrders(db, req.Orders)
 	if err != nil {
 		switch e := err.(type) {
-		case *validators.ValidationCourierError:
+		case *validators.ValidationOrderError:
 			return c.JSON(http.StatusBadRequest, models.BadRequestResponse{
-				Error:   fmt.Sprintf("Validation error for order: %v", e.Data),
+				Error:   fmt.Sprintf("Validation error for order"),
 				Message: e.Message,
+				Data:    fmt.Sprintf("%v -> %v", e.Data, e.Err),
 			})
 		default:
 			return echo.NewHTTPError(http.StatusInternalServerError, models.InternalServerErrorResponse{
@@ -42,8 +43,10 @@ func CreateOrder(c echo.Context, db *sqlx.DB) error {
 func GetOrder(c echo.Context, db *sqlx.DB) error {
 	orderID, err := strconv.ParseInt(c.Param("order_id"), 10, 64)
 	if err != nil || orderID <= 0 {
-		badRequest := models.BadRequestResponse{Error: "bad request",
-			Message: "order_id must be a positive integer"}
+		badRequest := models.BadRequestResponse{
+			Error:   "Bad request",
+			Message: "order_id must be a positive integer",
+		}
 		return c.JSON(http.StatusBadRequest, badRequest)
 	}
 	order, err := services.GetOrderById(db, orderID)
@@ -68,7 +71,8 @@ func GetOrders(c echo.Context, db *sqlx.DB) error {
 	if limitParam != "" {
 		limit, err = strconv.Atoi(limitParam)
 		if err != nil || limit <= 0 {
-			badRequest := models.BadRequestResponse{Error: "bad request",
+			badRequest := models.BadRequestResponse{
+				Error:   "bad request",
 				Message: "limit must be a positive integer"}
 			return c.JSON(http.StatusBadRequest, badRequest)
 		}
@@ -76,7 +80,8 @@ func GetOrders(c echo.Context, db *sqlx.DB) error {
 	if offsetParam != "" {
 		offset, err = strconv.Atoi(offsetParam)
 		if err != nil || offset < 0 {
-			badRequest := models.BadRequestResponse{Error: "bad request",
+			badRequest := models.BadRequestResponse{
+				Error:   "bad request",
 				Message: "offset must be a positive integer"}
 			return c.JSON(http.StatusBadRequest, badRequest)
 		}
@@ -111,10 +116,12 @@ func CompleteOrder(c echo.Context, db *sqlx.DB) error {
 		switch e := err.(type) {
 		case *validators.ValidationCompleteOrderError:
 			return c.JSON(http.StatusBadRequest, models.BadRequestResponse{
-				Error:   fmt.Sprintf("Validation error for orders: %v", e.Data),
+				Error:   fmt.Sprintf("Validation error for completed order"),
 				Message: e.Message,
+				Data:    fmt.Sprintf("%v -> %v", e.Data, e.Err),
 			})
 		default:
+			panic(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, models.InternalServerErrorResponse{
 				Error: "Error creating completed orders",
 			})

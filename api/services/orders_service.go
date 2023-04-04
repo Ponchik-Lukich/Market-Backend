@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
@@ -107,13 +108,6 @@ func CreateOrders(db *sqlx.DB, orders []models.CreateOrderDto) ([]models.Order, 
 }
 
 func CompleteOrder(db *sqlx.DB, orders []models.CompleteOrderDto) ([]models.Order, error) {
-	var completedOrders []models.Order
-	for _, order := range orders {
-		if err := validators.ValidateCompleteOrder(db, order); err != nil {
-			return nil, err
-		}
-	}
-
 	tx, err := db.Beginx()
 	if err != nil {
 		return nil, err
@@ -128,8 +122,45 @@ func CompleteOrder(db *sqlx.DB, orders []models.CompleteOrderDto) ([]models.Orde
 			tx.Commit()
 		}
 	}()
-
 	chunkSize := 21845
+
+	var completedOrders []models.Order
+	setIDs := map[int64]struct{}{}
+	var orderIDs []int64
+	for _, order := range orders {
+		if err := validators.ValidateCompleteOrder(db, order); err != nil {
+			return nil, err
+		}
+		if err := validators.ValidateIds(order.OrderID, &setIDs); err != nil {
+			return nil, err
+		}
+		orderIDs = append(orderIDs, order.OrderID)
+	}
+	for i := 0; i < len(orderIDs); i += chunkSize {
+		end := i + chunkSize
+		if end > len(orders) {
+			end = len(orders)
+		}
+		chunk := orderIDs[i:end]
+		var placeholders []interface{}
+		for _, id := range chunk {
+			placeholders = append(placeholders, id)
+		}
+		query := "SELECT NOT EXISTS (" +
+			"SELECT 1 FROM orders WHERE id IN ( " +
+			strings.Trim(strings.Repeat("?, ", len(placeholders)), " ,") +
+			") AND assignment = true)"
+		var result bool
+		println(query)
+		err := tx.Get(&result, query, placeholders...)
+		if err != nil {
+			return nil, err
+		}
+		if result {
+			return nil, errors.New("data contains completed orders")
+		}
+	}
+
 	for i := 0; i < len(orders); i += chunkSize {
 		end := i + chunkSize
 		if end > len(orders) {
