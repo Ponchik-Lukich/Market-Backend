@@ -6,6 +6,7 @@ import (
 	"github.com/lib/pq"
 	"os"
 	"strings"
+	"yandex-team.ru/bstask/api/middleware"
 	"yandex-team.ru/bstask/api/models"
 	"yandex-team.ru/bstask/api/utils/validators"
 )
@@ -39,7 +40,6 @@ func GetOrderById(db *sqlx.DB, OrderID int64) (*models.Order, error) {
 func CreateOrders(db *sqlx.DB, orders []models.CreateOrderDto) ([]models.Order, error) {
 	var createdOrders []models.Order
 
-	// Validate orders
 	for _, order := range orders {
 		err := validators.ValidateOrder(order)
 		if err != nil {
@@ -51,16 +51,7 @@ func CreateOrders(db *sqlx.DB, orders []models.CreateOrderDto) ([]models.Order, 
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p)
-		} else if err != nil {
-			tx.Rollback()
-		} else {
-			tx.Commit()
-		}
-	}()
+	defer middleware.RollbackOrCommit(tx, &err)
 
 	chunkSize := 16382
 	for i := 0; i < len(orders); i += chunkSize {
@@ -112,22 +103,10 @@ func CompleteOrder(db *sqlx.DB, orders []models.CompleteOrderDto) ([]models.Orde
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p)
-		} else if err != nil {
-			tx.Rollback()
-		} else {
-			tx.Commit()
-		}
-	}()
-
+	defer middleware.RollbackOrCommit(tx, &err)
 	var completedOrders []models.Order
 	setIDs := map[int64]struct{}{}
-	var orderIDs []int64
-	var courierIDs []int64
-
+	var orderIDs, courierIDs []int64
 	for _, order := range orders {
 		if err := validators.ValidateCompleteOrder(order); err != nil {
 			return nil, err
@@ -144,21 +123,15 @@ func CompleteOrder(db *sqlx.DB, orders []models.CompleteOrderDto) ([]models.Orde
 	}
 	folder := fmt.Sprintf("%s/%s/%s/%s", dir, "api", "models", "queries")
 	file := "check_orders"
-	query, err := os.ReadFile(fmt.Sprintf("%s/%s.sql", folder, file))
-	if err != nil {
-		return nil, err
-	}
-	var result1 bool
+	query, _ := os.ReadFile(fmt.Sprintf("%s/%s.sql", folder, file))
 	var result int
+	var result1 bool
 	err = tx.Get(&result, string(query), pq.Array(orderIDs))
 	if err := validators.ValidateAssignedOrders(err, result); err != nil {
 		return nil, err
 	}
 	file = "check_couriers"
-	query, err = os.ReadFile(fmt.Sprintf("%s/%s.sql", folder, file))
-	if err != nil {
-		return nil, err
-	}
+	query, _ = os.ReadFile(fmt.Sprintf("%s/%s.sql", folder, file))
 	err = tx.Get(&result1, string(query), pq.Array(courierIDs))
 	if err := validators.ValidateExistingCouriers(err, result1); err != nil {
 		return nil, err
@@ -174,6 +147,7 @@ func CompleteOrder(db *sqlx.DB, orders []models.CompleteOrderDto) ([]models.Orde
 
 		var placeholders []string
 		var values []interface{}
+		var orderIDs []int64
 		for i, order := range chunk {
 			placeholder := fmt.Sprintf("($%d, $%d, $%d)", i*3+1, i*3+2, i*3+3)
 			placeholders = append(placeholders, placeholder)
@@ -184,10 +158,10 @@ func CompleteOrder(db *sqlx.DB, orders []models.CompleteOrderDto) ([]models.Orde
 			return nil, err
 		}
 
-		var orderIDs []int64
 		for _, order := range chunk {
 			orderIDs = append(orderIDs, order.OrderID)
 		}
+		//TODO: make it shorter
 		query = "UPDATE orders SET assigned = true WHERE id = ANY($1) RETURNING id, cost, delivery_hours, delivery_district, weight"
 		rows, err := tx.Queryx(query, pq.Array(orderIDs))
 		if err != nil {
@@ -212,6 +186,5 @@ func CompleteOrder(db *sqlx.DB, orders []models.CompleteOrderDto) ([]models.Orde
 			return nil, err
 		}
 	}
-
 	return completedOrders, nil
 }

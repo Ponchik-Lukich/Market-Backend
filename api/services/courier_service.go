@@ -5,6 +5,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"os"
 	"time"
+	"yandex-team.ru/bstask/api/middleware"
 	"yandex-team.ru/bstask/api/models"
 	"yandex-team.ru/bstask/api/utils/validators"
 )
@@ -45,16 +46,7 @@ func CreateCouriers(db *sqlx.DB, couriers []models.CreateCourierDto) ([]models.C
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p)
-		} else if err != nil {
-			tx.Rollback()
-		} else {
-			tx.Commit()
-		}
-	}()
+	defer middleware.RollbackOrCommit(tx, &err)
 
 	chunkSize := 21845
 	for i := 0; i < len(couriers); i += chunkSize {
