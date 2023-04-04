@@ -122,21 +122,19 @@ func CompleteOrder(db *sqlx.DB, orders []models.CompleteOrderDto) ([]models.Orde
 		return nil, err
 	}
 	folder := fmt.Sprintf("%s/%s/%s/%s", dir, "api", "models", "queries")
-	file := "check_orders"
-	query, _ := os.ReadFile(fmt.Sprintf("%s/%s.sql", folder, file))
+	files := [3]string{"check_orders", "check_couriers", "update_orders"}
+	query, _ := os.ReadFile(fmt.Sprintf("%s/%s.sql", folder, files[0]))
 	var result int
 	var result1 bool
 	err = tx.Get(&result, string(query), pq.Array(orderIDs))
 	if err := validators.ValidateAssignedOrders(err, result); err != nil {
 		return nil, err
 	}
-	file = "check_couriers"
-	query, _ = os.ReadFile(fmt.Sprintf("%s/%s.sql", folder, file))
+	query, _ = os.ReadFile(fmt.Sprintf("%s/%s.sql", folder, files[1]))
 	err = tx.Get(&result1, string(query), pq.Array(courierIDs))
 	if err := validators.ValidateExistingCouriers(err, result1); err != nil {
 		return nil, err
 	}
-
 	chunkSize := 21845
 	for i := 0; i < len(orders); i += chunkSize {
 		end := i + chunkSize
@@ -144,7 +142,6 @@ func CompleteOrder(db *sqlx.DB, orders []models.CompleteOrderDto) ([]models.Orde
 			end = len(orders)
 		}
 		chunk := orders[i:end]
-
 		var placeholders []string
 		var values []interface{}
 		var orderIDs []int64
@@ -153,32 +150,23 @@ func CompleteOrder(db *sqlx.DB, orders []models.CompleteOrderDto) ([]models.Orde
 			placeholders = append(placeholders, placeholder)
 			values = append(values, order.OrderID, order.CourierId, order.CompleteTime)
 		}
-		query := "INSERT INTO order_completion (order_id, courier_id, complete_time) VALUES " + strings.Join(placeholders, ", ")
-		if _, err := tx.Exec(query, values...); err != nil {
+		firstQuery := "INSERT INTO order_completion (order_id, courier_id, complete_time) VALUES " + strings.Join(placeholders, ", ")
+		if _, err := tx.Exec(firstQuery, values...); err != nil {
 			return nil, err
 		}
-
 		for _, order := range chunk {
 			orderIDs = append(orderIDs, order.OrderID)
 		}
-		//TODO: make it shorter
-		query = "UPDATE orders SET assigned = true WHERE id = ANY($1) RETURNING id, cost, delivery_hours, delivery_district, weight"
-		rows, err := tx.Queryx(query, pq.Array(orderIDs))
+		query, _ = os.ReadFile(fmt.Sprintf("%s/%s.sql", folder, files[2]))
+		rows, err := tx.Queryx(string(query), pq.Array(orderIDs))
 		if err != nil {
 			return nil, err
 		}
 		defer rows.Close()
-
 		for rows.Next() {
 			var completedOrder models.Order
 			if err := rows.StructScan(&completedOrder); err != nil {
 				return nil, err
-			}
-			for _, order := range chunk {
-				if order.OrderID == completedOrder.OrderID {
-					completedOrder.CompleteTime = order.CompleteTime
-					break
-				}
 			}
 			completedOrders = append(completedOrders, completedOrder)
 		}

@@ -55,7 +55,6 @@ func CreateCouriers(db *sqlx.DB, couriers []models.CreateCourierDto) ([]models.C
 			end = len(couriers)
 		}
 		chunk := couriers[i:end]
-
 		query := `INSERT INTO couriers (type, working_areas, working_hours) VALUES (:type, :working_areas, :working_hours) RETURNING id, type, working_areas, working_hours`
 		rows, err := tx.NamedQuery(query, chunk)
 		if err != nil {
