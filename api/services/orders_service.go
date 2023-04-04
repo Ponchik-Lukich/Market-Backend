@@ -1,10 +1,10 @@
 package services
 
 import (
-	"errors"
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
+	"os"
 	"strings"
 	"yandex-team.ru/bstask/api/models"
 	"yandex-team.ru/bstask/api/utils/validators"
@@ -122,45 +122,49 @@ func CompleteOrder(db *sqlx.DB, orders []models.CompleteOrderDto) ([]models.Orde
 			tx.Commit()
 		}
 	}()
-	chunkSize := 21845
 
 	var completedOrders []models.Order
 	setIDs := map[int64]struct{}{}
 	var orderIDs []int64
+	var courierIDs []int64
+
 	for _, order := range orders {
-		if err := validators.ValidateCompleteOrder(db, order); err != nil {
+		if err := validators.ValidateCompleteOrder(order); err != nil {
 			return nil, err
 		}
 		if err := validators.ValidateIds(order.OrderID, &setIDs); err != nil {
 			return nil, err
 		}
 		orderIDs = append(orderIDs, order.OrderID)
+		courierIDs = append(courierIDs, order.CourierId)
 	}
-	for i := 0; i < len(orderIDs); i += chunkSize {
-		end := i + chunkSize
-		if end > len(orders) {
-			end = len(orders)
-		}
-		chunk := orderIDs[i:end]
-		var placeholders []interface{}
-		for _, id := range chunk {
-			placeholders = append(placeholders, id)
-		}
-		query := "SELECT NOT EXISTS (" +
-			"SELECT 1 FROM orders WHERE id IN ( " +
-			strings.Trim(strings.Repeat("?, ", len(placeholders)), " ,") +
-			") AND assignment = true)"
-		var result bool
-		println(query)
-		err := tx.Get(&result, query, placeholders...)
-		if err != nil {
-			return nil, err
-		}
-		if result {
-			return nil, errors.New("data contains completed orders")
-		}
+	dir, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+	folder := fmt.Sprintf("%s/%s/%s/%s", dir, "api", "models", "queries")
+	table := "check_orders"
+	query, err := os.ReadFile(fmt.Sprintf("%s/%s.sql", folder, table))
+	if err != nil {
+		return nil, err
+	}
+	var result1 bool
+	var result int
+	err = tx.Get(&result, string(query), pq.Array(orderIDs))
+	if err := validators.ValidateAssignedOrders(err, result); err != nil {
+		return nil, err
+	}
+	table = "check_couriers"
+	query, err = os.ReadFile(fmt.Sprintf("%s/%s.sql", folder, table))
+	if err != nil {
+		return nil, err
+	}
+	err = tx.Get(&result1, string(query), pq.Array(courierIDs))
+	if err := validators.ValidateExistingCouriers(err, result1); err != nil {
+		return nil, err
 	}
 
+	chunkSize := 21845
 	for i := 0; i < len(orders); i += chunkSize {
 		end := i + chunkSize
 		if end > len(orders) {
@@ -213,66 +217,3 @@ func CompleteOrder(db *sqlx.DB, orders []models.CompleteOrderDto) ([]models.Orde
 
 	return completedOrders, nil
 }
-
-//func CompleteOrder(db *sqlx.DB, orders []models.CompleteOrderDto) ([]models.Order, error) {
-//	var completedOrders []models.Order
-//	for _, order := range orders {
-//		if err := validators.ValidateCompleteOrder(order); err != nil {
-//			return nil, &validators.ValidationCompleteOrderError{
-//				Message: "Validation failed for completed order",
-//				Data:    order,
-//			}
-//		}
-//	}
-//
-//	tx, err := db.Beginx()
-//	if err != nil {
-//		return nil, err
-//	}
-//	defer func() {
-//		if p := recover(); p != nil {
-//			tx.Rollback()
-//			panic(p)
-//		} else if err != nil {
-//			tx.Rollback()
-//		} else {
-//			tx.Commit()
-//		}
-//	}()
-//
-//	// Insert into order_completion table
-//	query := `INSERT INTO order_completion (order_id, courier_id, complete_time) VALUES ($1, $2, $3)`
-//	for _, order := range orders {
-//		if _, err := tx.Exec(query, order.OrderID, order.CourierId, order.CompleteTime); err != nil {
-//			return nil, err
-//		}
-//	}
-//
-//	// Update assigned field in orders table
-//	query = `UPDATE orders SET assigned = true WHERE id = ANY($1) RETURNING id, cost, delivery_hours, delivery_district, weight`
-//	var orderIDs []int64
-//	for _, order := range orders {
-//		orderIDs = append(orderIDs, order.OrderID)
-//	}
-//	rows, err := tx.Queryx(query, pq.Array(orderIDs))
-//	if err != nil {
-//		return nil, err
-//	}
-//	defer rows.Close()
-//
-//	for rows.Next() {
-//		var completedOrder models.Order
-//		if err := rows.StructScan(&completedOrder); err != nil {
-//			return nil, err
-//		}
-//		for _, order := range orders {
-//			if order.OrderID == completedOrder.OrderID {
-//				completedOrder.CompleteTime = order.CompleteTime
-//				break
-//			}
-//		}
-//		completedOrders = append(completedOrders, completedOrder)
-//	}
-//
-//	return completedOrders, nil
-//}

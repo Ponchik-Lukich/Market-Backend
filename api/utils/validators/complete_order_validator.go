@@ -1,7 +1,6 @@
 package validators
 
 import (
-	"github.com/jmoiron/sqlx"
 	"yandex-team.ru/bstask/api/models"
 )
 
@@ -15,7 +14,7 @@ func (e *ValidationCompleteOrderError) Error() string {
 	return e.Message
 }
 
-func ValidateCompleteOrder(db *sqlx.DB, order models.CompleteOrderDto) error {
+func ValidateCompleteOrder(order models.CompleteOrderDto) error {
 	if order.OrderID <= 0 {
 		return &ValidationCompleteOrderError{
 			Message: "Order id is invalid",
@@ -37,22 +36,6 @@ func ValidateCompleteOrder(db *sqlx.DB, order models.CompleteOrderDto) error {
 			Err:     order.CompleteTime,
 		}
 	}
-	var assigned bool
-	query := `SELECT assigned FROM orders WHERE id = $1`
-	err := db.Get(&assigned, query, order.OrderID)
-	if err != nil {
-		return &ValidationCompleteOrderError{
-			Message: "Order not found",
-			Data:    order,
-			Err:     order.OrderID,
-		}
-	} else if assigned {
-		return &ValidationCompleteOrderError{
-			Message: "Order already completed",
-			Data:    order,
-			Err:     order.OrderID,
-		}
-	}
 
 	return nil
 }
@@ -64,5 +47,34 @@ func ValidateIds(id int64, setIds *map[int64]struct{}) error {
 		}
 	}
 	(*setIds)[id] = struct{}{}
+	return nil
+}
+
+func ValidateAssignedOrders(err error, result int) error {
+	if err != nil {
+		return err
+	}
+	if result == 1 {
+		return &ValidationCompleteOrderError{
+			Message: "Data contains not existing orders ids",
+		}
+	}
+	if result == 2 {
+		return &ValidationCompleteOrderError{
+			Message: "Data contains completed orders",
+		}
+	}
+	return nil
+}
+
+func ValidateExistingCouriers(err error, result bool) error {
+	if err != nil {
+		return err
+	}
+	if !result {
+		return &ValidationCompleteOrderError{
+			Message: "Data contains not existing couriers ids",
+		}
+	}
 	return nil
 }

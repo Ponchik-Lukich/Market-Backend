@@ -115,13 +115,19 @@ func CompleteOrder(c echo.Context, db *sqlx.DB) error {
 	if err != nil {
 		switch e := err.(type) {
 		case *validators.ValidationCompleteOrderError:
-			return c.JSON(http.StatusBadRequest, models.BadRequestResponse{
-				Error:   fmt.Sprintf("Validation error for completed order"),
-				Message: e.Message,
-				Data:    fmt.Sprintf("%v -> %v", e.Data, e.Err),
-			})
+			if e.Err == nil {
+				return c.JSON(http.StatusBadRequest, models.BadRequestResponse{
+					Error:   fmt.Sprintf("Validation error for order"),
+					Message: e.Message,
+				})
+			} else {
+				return c.JSON(http.StatusBadRequest, models.BadRequestResponse{
+					Error:   fmt.Sprintf("Validation error for order"),
+					Message: e.Message,
+					Data:    fmt.Sprintf("%v -> %v", e.Data, e.Err),
+				})
+			}
 		default:
-			panic(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, models.InternalServerErrorResponse{
 				Error: "Error creating completed orders",
 			})
