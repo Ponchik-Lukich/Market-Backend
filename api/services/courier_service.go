@@ -1,7 +1,9 @@
 package services
 
 import (
+	"fmt"
 	"github.com/jmoiron/sqlx"
+	"os"
 	"time"
 	"yandex-team.ru/bstask/api/models"
 	"yandex-team.ru/bstask/api/utils/validators"
@@ -33,7 +35,6 @@ func GetCouriers(db *sqlx.DB, limit int, offset int) ([]models.Courier, error) {
 
 func CreateCouriers(db *sqlx.DB, couriers []models.CreateCourierDto) ([]models.Courier, error) {
 	var createdCouriers []models.Courier
-	// Validate couriers
 	for _, courier := range couriers {
 		if err := validators.ValidateCourier(courier); err != nil {
 			return nil, err
@@ -88,31 +89,30 @@ func CreateCouriers(db *sqlx.DB, couriers []models.CreateCourierDto) ([]models.C
 
 func GetCourierMetaInfo(db *sqlx.DB, courierID int64, startDate string, endDate string) (*models.GetCourierMetaInfoResponse, error) {
 	var courierMetaInfo models.GetCourierMetaInfoResponse
+	if err := validators.ValidateCourierMeta(courierID, startDate, endDate); err != nil {
+		return nil, err
+	}
+	dir, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+	folder := fmt.Sprintf("%s/%s/%s/%s", dir, "api", "models", "queries")
+	file := "return_rating"
+	query, err := os.ReadFile(fmt.Sprintf("%s/%s.sql", folder, file))
+	if err != nil {
+		return nil, err
+	}
 	startDate = startDate + " 00:00:00"
 	endDate = endDate + " 00:00:00"
+	err = db.Get(&courierMetaInfo, string(query), courierID, startDate, endDate)
+	if err != nil {
+		return nil, err
+	}
 	layout := "2006-01-02 15:04:05"
 	start, _ := time.Parse(layout, startDate)
 	end, _ := time.Parse(layout, endDate)
 	duration := end.Sub(start)
 	hours := int32(duration.Hours())
-	query := `SELECT c.id,
-       c.type,
-       c.working_areas,
-       c.working_hours,
-       SUM(o.cost) AS earnings,
-       COUNT(o.id) AS completed_orders
-FROM couriers c
-         JOIN order_completion oc ON c.id = oc.courier_id
-         JOIN orders o ON o.id = oc.order_id
-WHERE oc.courier_id = $1
-  AND oc.complete_time >= $2
-  AND oc.complete_time < $3
-GROUP BY c.id, c.type, c.working_areas, c.working_hours
-`
-	err := db.Get(&courierMetaInfo, query, courierID, startDate, endDate)
-	if err != nil {
-		return nil, err
-	}
 	switch courierMetaInfo.CourierType {
 	case models.FOOT:
 		courierMetaInfo.Earnings = courierMetaInfo.Earnings * 2

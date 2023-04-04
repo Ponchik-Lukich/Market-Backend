@@ -143,8 +143,8 @@ func CompleteOrder(db *sqlx.DB, orders []models.CompleteOrderDto) ([]models.Orde
 		return nil, err
 	}
 	folder := fmt.Sprintf("%s/%s/%s/%s", dir, "api", "models", "queries")
-	table := "check_orders"
-	query, err := os.ReadFile(fmt.Sprintf("%s/%s.sql", folder, table))
+	file := "check_orders"
+	query, err := os.ReadFile(fmt.Sprintf("%s/%s.sql", folder, file))
 	if err != nil {
 		return nil, err
 	}
@@ -154,8 +154,8 @@ func CompleteOrder(db *sqlx.DB, orders []models.CompleteOrderDto) ([]models.Orde
 	if err := validators.ValidateAssignedOrders(err, result); err != nil {
 		return nil, err
 	}
-	table = "check_couriers"
-	query, err = os.ReadFile(fmt.Sprintf("%s/%s.sql", folder, table))
+	file = "check_couriers"
+	query, err = os.ReadFile(fmt.Sprintf("%s/%s.sql", folder, file))
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +172,6 @@ func CompleteOrder(db *sqlx.DB, orders []models.CompleteOrderDto) ([]models.Orde
 		}
 		chunk := orders[i:end]
 
-		// Insert into order_completion table
 		var placeholders []string
 		var values []interface{}
 		for i, order := range chunk {
@@ -185,7 +184,6 @@ func CompleteOrder(db *sqlx.DB, orders []models.CompleteOrderDto) ([]models.Orde
 			return nil, err
 		}
 
-		// Update assigned field in orders table
 		var orderIDs []int64
 		for _, order := range chunk {
 			orderIDs = append(orderIDs, order.OrderID)
