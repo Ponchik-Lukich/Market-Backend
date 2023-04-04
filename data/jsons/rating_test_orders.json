@@ -1,0 +1,76 @@
+{
+  "orders": [
+    {
+      "cost": 100,
+      "delivery_hours": [
+        "12:31-12:49"
+      ],
+      "regions": 1,
+      "weight": 23.24
+    },
+    {
+      "cost": 200,
+      "delivery_hours": [
+        "19:43-21:35"
+      ],
+      "regions": 2,
+      "weight": 64.7
+    },
+    {
+      "cost": 300,
+      "delivery_hours": [
+        "15:22-17:41"
+      ],
+      "regions": 3,
+      "weight": 22.64
+    },
+    {
+      "cost": 100,
+      "delivery_hours": [
+        "12:31-12:49"
+      ],
+      "regions": 1,
+      "weight": 23.24
+    },
+    {
+      "cost": 200,
+      "delivery_hours": [
+        "19:43-21:35"
+      ],
+      "regions": 2,
+      "weight": 64.7
+    },
+    {
+      "cost": 300,
+      "delivery_hours": [
+        "15:22-17:41"
+      ],
+      "regions": 3,
+      "weight": 22.64
+    },
+    {
+      "cost": 100,
+      "delivery_hours": [
+        "12:31-12:49"
+      ],
+      "regions": 1,
+      "weight": 23.24
+    },
+    {
+      "cost": 200,
+      "delivery_hours": [
+        "19:43-21:35"
+      ],
+      "regions": 2,
+      "weight": 64.7
+    },
+    {
+      "cost": 300,
+      "delivery_hours": [
+        "15:22-17:41"
+      ],
+      "regions": 3,
+      "weight": 22.64
+    }
+  ]
+}

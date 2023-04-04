@@ -89,36 +89,40 @@ func CreateCouriers(db *sqlx.DB, couriers []models.CreateCourierDto) ([]models.C
 func GetCourierMetaInfo(db *sqlx.DB, courierID int64, startDate string, endDate string) (*models.GetCourierMetaInfoResponse, error) {
 	var courierMetaInfo models.GetCourierMetaInfoResponse
 	startDate = startDate + " 00:00:00"
-	endDate = endDate + " 23:59:59"
+	endDate = endDate + " 00:00:00"
 	layout := "2006-01-02 15:04:05"
 	start, _ := time.Parse(layout, startDate)
 	end, _ := time.Parse(layout, endDate)
 	duration := end.Sub(start)
-	hours := int(duration.Hours())
-	query := `SELECT с.id,
-       с.type,
-       с.working_areas,
-       с.working_hours,
+	hours := int32(duration.Hours())
+	query := `SELECT c.id,
+       c.type,
+       c.working_areas,
+       c.working_hours,
        SUM(o.cost) AS earnings,
-       COUNT(o.id) / $1 AS completed_orders
-FROM couriers с
-         JOIN orders o ON с.id = o.courier_id
-         JOIN order_completion oc ON o.id = oc.order_id
-WHERE o.courier_id = $2 
-  AND  oc.completion_time >= $3
-  AND oc.completion_time < $4
-GROUP BY с.id, с.type, с.working_areas, с.working_hours`
-	err := db.Get(&courierMetaInfo, query, hours, courierID, startDate, endDate)
+       COUNT(o.id) AS completed_orders
+FROM couriers c
+         JOIN order_completion oc ON c.id = oc.courier_id
+         JOIN orders o ON o.id = oc.order_id
+WHERE oc.courier_id = $1
+  AND oc.complete_time >= $2
+  AND oc.complete_time < $3
+GROUP BY c.id, c.type, c.working_areas, c.working_hours
+`
+	err := db.Get(&courierMetaInfo, query, courierID, startDate, endDate)
 	if err != nil {
 		return nil, err
 	}
 	switch courierMetaInfo.CourierType {
 	case models.FOOT:
 		courierMetaInfo.Earnings = courierMetaInfo.Earnings * 2
+		courierMetaInfo.Rating = int32(float32(courierMetaInfo.Rating) / float32(hours) * 3)
 	case models.BIKE:
 		courierMetaInfo.Earnings = courierMetaInfo.Earnings * 3
+		courierMetaInfo.Rating = int32(float32(courierMetaInfo.Rating) / float32(hours) * 2)
 	case models.AUTO:
 		courierMetaInfo.Earnings = courierMetaInfo.Earnings * 4
+		courierMetaInfo.Rating = courierMetaInfo.Rating / hours
 	}
 	return &courierMetaInfo, nil
 }

@@ -38,10 +38,10 @@ type GetCourierResponse struct {
 }
 
 type GetCourierMetaInfoResponse struct {
-	CourierID    int64       `json:"courier_id"`
-	CourierType  CourierType `json:"courier_type"`
-	Regions      []int       `json:"regions"`
-	WorkingHours []string    `json:"working_hours"`
-	Rating       int         `json:"rating"`
-	Earnings     int         `json:"earnings"`
+	CourierID    int64          `json:"courier_id" db:"id"`
+	CourierType  CourierType    `json:"courier_type" db:"type"`
+	WorkingAreas pq.Int64Array  `json:"regions" db:"working_areas"`
+	WorkingHours pq.StringArray `json:"working_hours" db:"working_hours"`
+	Rating       int32          `json:"rating" db:"completed_orders"`
+	Earnings     int32          `json:"earnings" db:"earnings"`
 }

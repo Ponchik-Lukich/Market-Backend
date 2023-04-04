@@ -14,11 +14,11 @@ type Server struct {
 
 func (s *Server) Initialize() {
 	s.DB = config.ConnectDB()
-	err := config.DropTables(s.DB)
-	if err != nil {
-		panic(err)
-	}
-	err = config.InitializeTables(s.DB)
+	//err := config.DropTables(s.DB)
+	//if err != nil {
+	//	panic(err)
+	//}
+	err := config.InitializeTables(s.DB)
 	if err != nil {
 		panic(err)
 	}

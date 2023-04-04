@@ -131,27 +131,3 @@ func GetCourierMetaInfo(c echo.Context, db *sqlx.DB) error {
 	}
 	return c.JSON(http.StatusOK, courier)
 }
-
-//func CreateCourier(c echo.Context, db *sqlx.DB) error {
-//	var req models.CreateCourierRequest
-//	var res models.CreateCourierResponse
-//	var couriers []models.CreateCourierDto
-//
-//	if err := c.Bind(&req); err != nil {
-//		return echo.NewHTTPError(http.StatusBadRequest, models.BadRequestResponse{Error: "bad request"})
-//	}
-//	couriers = req.Couriers
-//	err := services.CreateCouriers(db, couriers)
-//	if err != nil {
-//		switch e := err.(type) {
-//		case *validators.ValidationCourierError:
-//			return c.JSON(http.StatusBadRequest, models.BadRequestResponse{
-//				Error: fmt.Sprintf("Validation error for courier: %v", e.Data),
-//			})
-//		default:
-//			return echo.NewHTTPError(http.StatusInternalServerError, "Error creating couriers")
-//		}
-//	}
-//	// return array of created couriers as json
-//	return c.JSON(http.StatusOK, couriers)
-//}

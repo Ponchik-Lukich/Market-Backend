@@ -1,0 +1,36 @@
+{
+  "couriers": [
+    {
+      "working_hours": [
+        "07:14-09:14",
+        "10:14-12:14"
+      ],
+      "regions": [
+        1
+      ],
+      "courier_type": "FOOT"
+    },
+    {
+      "working_hours": [
+        "09:14-20:14"
+      ],
+      "regions": [
+        1,
+        6
+      ],
+      "courier_type": "BIKE"
+    },
+    {
+      "working_hours": [
+        "10:20-12:20"
+      ],
+      "regions": [
+        1,
+        6,
+        4,
+        7
+      ],
+      "courier_type": "AUTO"
+    }
+  ]
+}
