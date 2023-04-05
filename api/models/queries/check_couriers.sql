@@ -1,4 +1,4 @@
-SELECT COUNT(*) = 0
+SELECT id_list.ids AS non_existing_courier_id
 FROM unnest($1::bigint[]) AS id_list(ids)
 WHERE NOT EXISTS(
         SELECT 1

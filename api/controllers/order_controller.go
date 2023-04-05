@@ -5,13 +5,12 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 	"net/http"
+	"reflect"
 	"strconv"
 	"yandex-team.ru/bstask/api/models"
 	"yandex-team.ru/bstask/api/services"
 	"yandex-team.ru/bstask/api/utils/validators"
 )
-
-//TODO: Implement logic for order controller
 
 func CreateOrder(c echo.Context, db *sqlx.DB) error {
 	var req models.CreateOrderRequest
@@ -120,6 +119,12 @@ func CompleteOrder(c echo.Context, db *sqlx.DB) error {
 					Error:   fmt.Sprintf("Validation error for order"),
 					Message: e.Message,
 				})
+			} else if reflect.TypeOf(e.Err).Kind() == reflect.Slice {
+				return c.JSON(http.StatusBadRequest, models.BadRequestResponse{
+					Error:   fmt.Sprintf("Validation error for order"),
+					Message: e.Message,
+					Data:    fmt.Sprintf("%v", e.Err),
+				})
 			} else {
 				return c.JSON(http.StatusBadRequest, models.BadRequestResponse{
 					Error:   fmt.Sprintf("Validation error for order"),
@@ -127,8 +132,8 @@ func CompleteOrder(c echo.Context, db *sqlx.DB) error {
 					Data:    fmt.Sprintf("%v -> %v", e.Data, e.Err),
 				})
 			}
+
 		default:
-			panic(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, models.InternalServerErrorResponse{
 				Error: "Error creating completed orders",
 			})

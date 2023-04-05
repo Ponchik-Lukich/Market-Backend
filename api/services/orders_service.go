@@ -58,10 +58,8 @@ func CreateOrders(db *sqlx.DB, orders []models.CreateOrderDto) ([]models.Order, 
 			end = len(orders)
 		}
 		chunk := orders[i:end]
-
 		var query strings.Builder
 		query.WriteString("INSERT INTO orders (cost, delivery_hours, delivery_district, weight) VALUES ")
-
 		var placeholders []string
 		var values []interface{}
 		for i, order := range chunk {
@@ -69,7 +67,6 @@ func CreateOrders(db *sqlx.DB, orders []models.CreateOrderDto) ([]models.Order, 
 			placeholders = append(placeholders, placeholder)
 			values = append(values, order.Cost, order.DeliveryHours, order.Regions, order.Weight)
 		}
-
 		query.WriteString(strings.Join(placeholders, ", "))
 		query.WriteString(" RETURNING id, cost, delivery_hours, delivery_district, weight")
 
@@ -78,7 +75,6 @@ func CreateOrders(db *sqlx.DB, orders []models.CreateOrderDto) ([]models.Order, 
 			return nil, err
 		}
 		defer rows.Close()
-
 		for rows.Next() {
 			var createdOrder models.Order
 			err := rows.Scan(&createdOrder.OrderID, &createdOrder.Cost, &createdOrder.DeliveryHours, &createdOrder.Regions, &createdOrder.Weight)
@@ -87,7 +83,6 @@ func CreateOrders(db *sqlx.DB, orders []models.CreateOrderDto) ([]models.Order, 
 			}
 			createdOrders = append(createdOrders, createdOrder)
 		}
-
 		if err := rows.Err(); err != nil {
 			return nil, err
 		}
@@ -123,13 +118,12 @@ func CompleteOrder(db *sqlx.DB, orders []models.CompleteOrderDto) ([]models.Orde
 	}
 	folder := fmt.Sprintf("%s/%s/%s/%s", dir, "api", "models", "queries")
 	var ordersRes int
-	var couriersRes bool
+	var couriersRes []int64
 	query, _ := os.ReadFile(fmt.Sprintf("%s/%s.sql", folder, "check_couriers"))
-	err = tx.Get(&couriersRes, string(query), pq.Array(courierIDs))
+	err = tx.Select(&couriersRes, string(query), pq.Array(courierIDs))
 	if err := validators.ValidateExistingCouriers(err, couriersRes); err != nil {
 		return nil, err
 	}
-	// TODO rewrite validator
 	query, _ = os.ReadFile(fmt.Sprintf("%s/%s.sql", folder, "check_orders"))
 	err = tx.Get(&ordersRes, string(query), pq.Array(orderIDs), pq.Array(courierIDs))
 	if err := validators.ValidateAssignedOrders(err, ordersRes); err != nil {
@@ -150,69 +144,3 @@ func CompleteOrder(db *sqlx.DB, orders []models.CompleteOrderDto) ([]models.Orde
 	}
 	return completedOrders, nil
 }
-
-//func CompleteOrder(db *sqlx.DB, orders []models.CompleteOrderDto) ([]models.Order, error) {
-//	tx, err := db.Beginx()
-//	if err != nil {
-//		return nil, err
-//	}
-//	defer middleware.RollbackOrCommit(tx, &err)
-//	var completedOrders []models.Order
-//	setIDs := map[int64]struct{}{}
-//	var orderIDs, courierIDs []int64
-//	var completeTime []*time.Time
-//	for _, order := range orders {
-//		if err := validators.ValidateCompleteOrder(order); err != nil {
-//			return nil, err
-//		}
-//		if err := validators.ValidateIds(order.OrderID, &setIDs); err != nil {
-//			return nil, err
-//		}
-//		orderIDs = append(orderIDs, order.OrderID)
-//		courierIDs = append(courierIDs, order.CourierId)
-//		completeTime = append(completeTime, order.CompleteTime)
-//	}
-//	dir, err := os.Getwd()
-//	if err != nil {
-//		return nil, err
-//	}
-//	folder := fmt.Sprintf("%s/%s/%s/%s", dir, "api", "models", "queries")
-//	query, _ := os.ReadFile(fmt.Sprintf("%s/%s.sql", folder, "check_orders"))
-//	var result int
-//	var result1 bool
-//	err = tx.Get(&result, string(query), pq.Array(orderIDs))
-//	// TODO rewrite validator
-//	if err := validators.ValidateAssignedOrders(err, result); err != nil {
-//		return nil, err
-//	}
-//	query, _ = os.ReadFile(fmt.Sprintf("%s/%s.sql", folder, "check_couriers2"))
-//	err = tx.Get(&result1, string(query), pq.Array(orderIDs), pq.Array(courierIDs))
-//	if err := validators.ValidateExistingCouriers(err, result1); err != nil {
-//		return nil, err
-//	}
-//	chunkSize := 21845
-//	for i := 0; i < len(orders); i += chunkSize {
-//		end := i + chunkSize
-//		if end > len(orders) {
-//			end = len(orders)
-//		}
-//		chunkOrderIDs := orderIDs[i:end]
-//		query, _ := os.ReadFile(fmt.Sprintf("%s/%s.sql", folder, "update_orders"))
-//		rows, err := tx.Queryx(string(query), pq.Array(chunkOrderIDs), pq.Array(chunkCompleteTime))
-//		if err != nil {
-//			return nil, err
-//		}
-//		defer rows.Close()
-//		for rows.Next() {
-//			var completedOrder models.Order
-//			if err := rows.StructScan(&completedOrder); err != nil {
-//				return nil, err
-//			}
-//			completedOrders = append(completedOrders, completedOrder)
-//		}
-//		if err := rows.Err(); err != nil {
-//			return nil, err
-//		}
-//	}
-//	return completedOrders, nil
-//}

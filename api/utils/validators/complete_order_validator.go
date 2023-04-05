@@ -56,7 +56,7 @@ func ValidateAssignedOrders(err error, result int) error {
 	}
 	if result == 1 {
 		return &ValidationCompleteOrderError{
-			Message: "Courier id is null",
+			Message: "Orders courier_id is null",
 		}
 	}
 	if result == 2 {
@@ -72,14 +72,15 @@ func ValidateAssignedOrders(err error, result int) error {
 	return nil
 }
 
-func ValidateExistingCouriers(err error, result bool) error {
+func ValidateExistingCouriers(err error, ids []int64) error {
 	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return nil
+		}
 		return err
 	}
-	if !result {
-		return &ValidationCompleteOrderError{
-			Message: "Data contains not existing couriers ids",
-		}
+	return &ValidationCompleteOrderError{
+		Message: "Data contains not existing couriers ids",
+		Err:     ids,
 	}
-	return nil
 }
