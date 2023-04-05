@@ -5,5 +5,6 @@ CREATE TABLE IF NOT EXISTS orders
     delivery_district INT,
     delivery_hours TEXT[],
     cost INT,
-    assigned BOOLEAN NOT NULL DEFAULT FALSE
+    courier_id INT REFERENCES couriers(id) DEFAULT NULL,
+    complete_time TIMESTAMP DEFAULT NULL
 );

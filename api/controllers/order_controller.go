@@ -128,6 +128,7 @@ func CompleteOrder(c echo.Context, db *sqlx.DB) error {
 				})
 			}
 		default:
+			panic(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, models.InternalServerErrorResponse{
 				Error: "Error creating completed orders",
 			})

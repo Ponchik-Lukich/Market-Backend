@@ -11,7 +11,7 @@ type Order struct {
 	DeliveryHours pq.StringArray `json:"delivery_hours" db:"delivery_hours"`
 	Regions       int            `json:"regions" db:"delivery_district"`
 	Weight        float64        `json:"weight" db:"weight"`
-	CompleteTime  *time.Time     `json:"complete_time,omitempty" db:"complete_time,omitempty"`
+	CompleteTime  *time.Time     `json:"completed_time,omitempty" db:"complete_time,omitempty"`
 }
 
 type CreateOrderDto struct {

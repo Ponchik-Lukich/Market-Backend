@@ -56,12 +56,17 @@ func ValidateAssignedOrders(err error, result int) error {
 	}
 	if result == 1 {
 		return &ValidationCompleteOrderError{
-			Message: "Data contains not existing orders ids",
+			Message: "Courier id is null",
 		}
 	}
 	if result == 2 {
 		return &ValidationCompleteOrderError{
-			Message: "Data contains completed orders",
+			Message: "Orders is assigned to another courier",
+		}
+	}
+	if result == 3 {
+		return &ValidationCompleteOrderError{
+			Message: "Order does not exist",
 		}
 	}
 	return nil

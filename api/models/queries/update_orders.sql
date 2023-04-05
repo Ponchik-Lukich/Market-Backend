@@ -1,8 +1,5 @@
 UPDATE orders
-SET assigned = true
-WHERE id = ANY($1)
-RETURNING id, cost, delivery_hours, delivery_district, weight, (
-    SELECT complete_time
-    FROM order_completion
-    WHERE order_id = orders.id
-);
+SET complete_time = ct.complete_time
+FROM unnest($1::bigint[], $2::timestamp[]) ct(order_id, complete_time)
+WHERE orders.id = ct.order_id
+RETURNING orders.id, orders.weight, orders.delivery_district, orders.delivery_hours, orders.cost, orders.complete_time;
