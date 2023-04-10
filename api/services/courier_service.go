@@ -10,6 +10,16 @@ import (
 	"yandex-team.ru/bstask/api/utils/validators"
 )
 
+func GetCouriers(db *sqlx.DB, limit int, offset int) ([]models.Courier, error) {
+	var couriers []models.Courier
+	query := `SELECT * FROM couriers LIMIT $1 OFFSET $2`
+	err := db.Select(&couriers, query, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	return couriers, nil
+}
+
 func GetCourierById(db *sqlx.DB, courierID int64) (*models.Courier, error) {
 	var courier models.Courier
 	query := `SELECT * FROM couriers WHERE id = $1`
@@ -21,17 +31,6 @@ func GetCourierById(db *sqlx.DB, courierID int64) (*models.Courier, error) {
 		return nil, err
 	}
 	return &courier, nil
-}
-
-func GetCouriers(db *sqlx.DB, limit int, offset int) ([]models.Courier, error) {
-	var couriers []models.Courier
-	query := `SELECT * FROM couriers LIMIT $1 OFFSET $2`
-	err := db.Select(&couriers, query, limit, offset)
-
-	if err != nil {
-		return nil, err
-	}
-	return couriers, nil
 }
 
 func CreateCouriers(db *sqlx.DB, couriers []models.CreateCourierDto) ([]models.Courier, error) {

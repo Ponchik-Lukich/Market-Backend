@@ -8,7 +8,7 @@ from generate_orders import check_overlap, generate_hours
 def generate_couriers():
     f = Faker()
     couriers = {"couriers": []}
-    for i in range(100000):
+    for i in range(100):
         courier = {"working_hours": generate_hours(f)}
         working_areas_count = random.randint(1, 10)
         working_areas = []

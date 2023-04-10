@@ -112,19 +112,18 @@ func TestCreateOrder(t *testing.T) {
 
 }
 
-//
-//func TestGetOrder(t *testing.T) {
-//	orderId := 1
-//
-//	resp, err := http.Get(fmt.Sprintf("http://localhost:8080/orders/%d", orderId))
-//	assert.NoError(t, err, "HTTP error")
-//	defer resp.Body.Close()
-//
-//	assert.Equal(t, http.StatusOK, resp.StatusCode, "HTTP status code")
-//
-//	var retrievedOrder models.Order
-//	err = json.NewDecoder(resp.Body).Decode(&retrievedOrder)
-//	assert.NoError(t, err, "failed to decode HTTP body")
-//
-//	assert.Equal(t, orderId, retrievedOrder.ID, "Mismatch in order ID")
-//}
+func TestGetOrder(t *testing.T) {
+	var orderId int64 = 1
+
+	resp, err := http.Get(fmt.Sprintf("http://localhost:8080/orders/%d", orderId))
+	assert.NoError(t, err, "HTTP error")
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode, "HTTP status code")
+
+	var retrievedOrder models.Order
+	err = json.NewDecoder(resp.Body).Decode(&retrievedOrder)
+	assert.NoError(t, err, "failed to decode HTTP body")
+
+	assert.Equal(t, orderId, retrievedOrder.OrderID, "Mismatch in order ID")
+}

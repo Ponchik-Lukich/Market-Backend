@@ -14,7 +14,7 @@ import (
 
 func GetOrders(db *sqlx.DB, limit int, offset int) ([]models.Order, error) {
 	var orders []models.Order
-	query := `SELECT id, cost, delivery_hours, delivery_district, weight, complete_time FROM orders`
+	query := `SELECT id, cost, delivery_hours, delivery_district, weight, complete_time FROM orders LIMIT $1 OFFSET $2`
 	err := db.Select(&orders, query, limit, offset)
 	if err != nil {
 		return nil, err
