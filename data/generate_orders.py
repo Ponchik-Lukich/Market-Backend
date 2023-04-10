@@ -37,12 +37,12 @@ def generate_order():
     f = Faker()
     orders = {"orders": []}
 
-    for i in range(100):
+    for i in range(100000):
         order = {"cost": f.random_int(min=100, max=10000)}
         delivery_hours = generate_hours(f)
         order["delivery_hours"] = delivery_hours
-        order["regions"] = f.random_int(min=1, max=100)
-        order["weight"] = round(random.uniform(1, 100), 2)
+        order["regions"] = f.random_int(min=1, max=20)
+        order["weight"] = round(random.uniform(1, 40), 2)
         orders["orders"].append(order)
 
     # write to file

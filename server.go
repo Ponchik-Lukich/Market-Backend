@@ -41,4 +41,5 @@ func main() {
 		}
 	}()
 	server.Echo.Logger.Fatal(server.Echo.Start(":8080"))
+
 }
