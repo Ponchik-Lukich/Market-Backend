@@ -12,7 +12,6 @@ import (
 )
 
 func TestCreateCourier(t *testing.T) {
-	// Create a new courier
 	courier := models.CreateCourierDto{
 		WorkingHours: []string{"10:00-12:00", "13:00-18:00"},
 		WorkingAreas: []int64{1, 2, 3},
@@ -179,6 +178,15 @@ func TestGetCourierById(t *testing.T) {
 	assert.Equal(t, courierID, retrievedCourier.CourierID, "Mismatch in courier ID")
 }
 
+func TestGetCourierByIdInvalid(t *testing.T) {
+	var courierID int64 = -1
+	resp, err := http.Get(fmt.Sprintf("http://localhost:8080/couriers/%d", courierID))
+	assert.NoError(t, err, "HTTP error")
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode, "HTTP status code")
+}
+
 func TestCreateOrder(t *testing.T) {
 	order := models.CreateOrderDto{
 		Cost:          1,
@@ -220,10 +228,124 @@ func TestCreateOrder(t *testing.T) {
 	assert.Equal(t, order.DeliveryHours, createdOrder.DeliveryHours, "Mismatch in order delivery hours")
 	assert.Equal(t, order.Regions, createdOrder.Regions, "Mismatch in order regions")
 	assert.Equal(t, order.Weight, createdOrder.Weight, "Mismatch in order weight")
-
 }
 
-func TestGetOrder(t *testing.T) {
+func TestCreateOrderInvalidCost(t *testing.T) {
+	order := models.CreateOrderDto{
+		Cost:          0,
+		DeliveryHours: []string{"10:00-12:00", "13:00-18:00"},
+		Regions:       1,
+		Weight:        1.0,
+	}
+	orderRequest := models.CreateOrderRequest{
+		Orders: []models.CreateOrderDto{order},
+	}
+
+	data, err := json.Marshal(orderRequest)
+	assert.NoError(t, err, "failed to marshal order")
+
+	resp, err := http.Post("http://localhost:8080/orders", "application/json", bytes.NewBuffer(data))
+	assert.NoError(t, err, "HTTP error")
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode, "HTTP status code")
+}
+
+func TestCreateOrderInvalidWeight(t *testing.T) {
+	order := models.CreateOrderDto{
+		Cost:          1,
+		DeliveryHours: []string{"10:00-12:00", "13:00-18:00"},
+		Regions:       1,
+		Weight:        0.0,
+	}
+	orderRequest := models.CreateOrderRequest{
+		Orders: []models.CreateOrderDto{order},
+	}
+
+	data, err := json.Marshal(orderRequest)
+	assert.NoError(t, err, "failed to marshal order")
+
+	resp, err := http.Post("http://localhost:8080/orders", "application/json", bytes.NewBuffer(data))
+	assert.NoError(t, err, "HTTP error")
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode, "HTTP status code")
+}
+
+func TestCreateOrderInvalidDeliveryHours(t *testing.T) {
+	nonexistentDeliveryHours := []string{
+		"23:59-26:00",
+	}
+
+	invalidDeliveryHours1 := []string{
+		"23:59-00:01",
+	}
+
+	invalidDeliveryHours2 := []string{
+		"14:00-13:00",
+	}
+
+	overlappingDeliveryHours := []string{
+		"11:00-13:00",
+		"10:00-12:00",
+	}
+
+	testCases := []struct {
+		name         string
+		workingHours []string
+	}{
+		{"nonexistent_hours", nonexistentDeliveryHours},
+		{"invalid_hours_1", invalidDeliveryHours1},
+		{"invalid_hours_2", invalidDeliveryHours2},
+		{"overlapping_hours", overlappingDeliveryHours},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			order := models.CreateOrderDto{
+				Cost:          1,
+				DeliveryHours: tc.workingHours,
+				Regions:       1,
+				Weight:        1.0,
+			}
+			orderRequest := models.CreateOrderRequest{
+				Orders: []models.CreateOrderDto{order},
+			}
+
+			data, err := json.Marshal(orderRequest)
+			assert.NoError(t, err, "failed to marshal order")
+
+			resp, err := http.Post("http://localhost:8080/orders", "application/json", bytes.NewBuffer(data))
+			assert.NoError(t, err, "HTTP error")
+			defer resp.Body.Close()
+
+			assert.Equal(t, http.StatusBadRequest, resp.StatusCode, "HTTP status code")
+		})
+	}
+}
+
+func TestCreateOrderInvalidRegions(t *testing.T) {
+	order := models.CreateOrderDto{
+		Cost:          1,
+		DeliveryHours: []string{"10:00-12:00", "13:00-18:00"},
+		Regions:       0,
+		Weight:        1.0,
+	}
+	orderRequest := models.CreateOrderRequest{
+		Orders: []models.CreateOrderDto{order},
+	}
+
+	data, err := json.Marshal(orderRequest)
+	assert.NoError(t, err, "failed to marshal order")
+
+	resp, err := http.Post("http://localhost:8080/orders", "application/json", bytes.NewBuffer(data))
+	assert.NoError(t, err, "HTTP error")
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode, "HTTP status code")
+}
+
+func TestGetOrderById(t *testing.T) {
 	var orderId int64 = 1
 
 	resp, err := http.Get(fmt.Sprintf("http://localhost:8080/orders/%d", orderId))
@@ -237,4 +359,14 @@ func TestGetOrder(t *testing.T) {
 	assert.NoError(t, err, "failed to decode HTTP body")
 
 	assert.Equal(t, orderId, retrievedOrder.OrderID, "Mismatch in order ID")
+}
+
+func TestGetOrderByIdInvalid(t *testing.T) {
+	var orderId int64 = -1
+
+	resp, err := http.Get(fmt.Sprintf("http://localhost:8080/orders/%d", orderId))
+	assert.NoError(t, err, "HTTP error")
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode, "HTTP status code")
 }
