@@ -8,7 +8,7 @@ import (
 
 func SetupRoutes(e *echo.Echo, db *sqlx.DB) {
 	// Couriers
-	routesLimiter := newLimiter(10, 1)
+	routesLimiter := newLimiter(10, 10)
 	e.POST("/couriers", withLimiter(routesLimiter, controllers.CreateCourier, db))
 	e.GET("/couriers/:courier_id", withLimiter(routesLimiter, controllers.GetCourierById, db))
 	e.GET("/couriers", withLimiter(routesLimiter, controllers.GetCouriers, db))

@@ -7,8 +7,8 @@ import (
 	"net/http"
 )
 
-func newLimiter(r float64, s int) *rate.Limiter {
-	return rate.NewLimiter(rate.Limit(r), s)
+func newLimiter(r float64, b int) *rate.Limiter {
+	return rate.NewLimiter(rate.Limit(r), b)
 }
 
 func withLimiter(limiter *rate.Limiter, handlerFunc func(echo.Context, *sqlx.DB) error, db *sqlx.DB) func(echo.Context) error {

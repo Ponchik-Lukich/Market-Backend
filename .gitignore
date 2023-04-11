@@ -1,5 +1,4 @@
 .idea
-
-data/.idea
-data/jsons
-data/__pycache__
+./data/.idea
+./data/jsons
+./data/__pycache__

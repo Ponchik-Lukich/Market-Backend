@@ -53,6 +53,73 @@ func TestCreateCourier(t *testing.T) {
 	assert.Equal(t, courier.CourierType, createdCourier.CourierType, "Mismatch in courier type")
 }
 
+func TestCreateCourierInvalidWorkingHours(t *testing.T) {
+	invalidWorkingHours1 := []string{
+		"25:00-26:00",
+	}
+
+	invalidWorkingHours2 := []string{
+		"23:59-00:01",
+	}
+
+	overlappingWorkingHours := []string{
+		"11:00-13:00",
+		"10:00-12:00",
+	}
+
+	testCases := []struct {
+		name         string
+		workingHours []string
+	}{
+		{"invalid_hours_1", invalidWorkingHours1},
+		{"invalid_hours_2", invalidWorkingHours2},
+		{"overlapping_hours", overlappingWorkingHours},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			courier := models.CreateCourierDto{
+				WorkingHours: tc.workingHours,
+				WorkingAreas: []int64{1, 2, 3},
+				CourierType:  "FOOT",
+			}
+			courierRequest := models.CreateCourierRequest{
+				Couriers: []models.CreateCourierDto{courier},
+			}
+
+			data, err := json.Marshal(courierRequest)
+			assert.NoError(t, err, "failed to marshal courier")
+
+			resp, err := http.Post("http://localhost:8080/couriers", "application/json", bytes.NewBuffer(data))
+			assert.NoError(t, err, "HTTP error")
+			defer resp.Body.Close()
+
+			assert.Equal(t, http.StatusBadRequest, resp.StatusCode, "HTTP status code")
+		})
+	}
+}
+
+func TestCreateCourierInvalidWorkingAreas(t *testing.T) {
+	// Create a new courier with invalid working areas
+	courier := models.CreateCourierDto{
+		WorkingHours: []string{"10:00-12:00", "13:00-18:00"},
+		WorkingAreas: []int64{-1},
+		CourierType:  "FOOT",
+	}
+	courierRequest := models.CreateCourierRequest{
+		Couriers: []models.CreateCourierDto{courier},
+	}
+
+	data, err := json.Marshal(courierRequest)
+	assert.NoError(t, err, "failed to marshal courier")
+
+	resp, err := http.Post("http://localhost:8080/couriers", "application/json", bytes.NewBuffer(data))
+	assert.NoError(t, err, "HTTP error")
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode, "HTTP status code")
+}
+
 func TestGetCourierById(t *testing.T) {
 	var courierID int64 = 1
 	resp, err := http.Get(fmt.Sprintf("http://localhost:8080/couriers/%d", courierID))
