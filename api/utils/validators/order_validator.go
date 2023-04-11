@@ -27,6 +27,13 @@ func ValidateOrder(order models.CreateOrderDto) error {
 			Err:     order.Cost,
 		}
 	}
+	if order.Regions <= 0 {
+		return &ValidationOrderError{
+			Message: "Order delivery region is invalid",
+			Data:    order,
+			Err:     order.Regions,
+		}
+	}
 	var intervals []string
 	set := map[string]struct{}{}
 	for i := 0; i < len(order.DeliveryHours); i++ {
