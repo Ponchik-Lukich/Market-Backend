@@ -54,12 +54,16 @@ func TestCreateCourier(t *testing.T) {
 }
 
 func TestCreateCourierInvalidWorkingHours(t *testing.T) {
-	invalidWorkingHours1 := []string{
+	nonexistentWorkingHours := []string{
 		"25:00-26:00",
 	}
 
-	invalidWorkingHours2 := []string{
+	invalidWorkingHours1 := []string{
 		"23:59-00:01",
+	}
+
+	invalidWorkingHours2 := []string{
+		"14:00-13:00",
 	}
 
 	overlappingWorkingHours := []string{
@@ -71,6 +75,7 @@ func TestCreateCourierInvalidWorkingHours(t *testing.T) {
 		name         string
 		workingHours []string
 	}{
+		{"nonexistent_hours", nonexistentWorkingHours},
 		{"invalid_hours_1", invalidWorkingHours1},
 		{"invalid_hours_2", invalidWorkingHours2},
 		{"overlapping_hours", overlappingWorkingHours},
@@ -100,11 +105,50 @@ func TestCreateCourierInvalidWorkingHours(t *testing.T) {
 }
 
 func TestCreateCourierInvalidWorkingAreas(t *testing.T) {
-	// Create a new courier with invalid working areas
+
+	zeroAreas := []int64{0}
+
+	negativeAreas := []int64{1, -1}
+
+	overlappingAreas := []int64{1, 2, 1}
+
+	testCases := []struct {
+		name         string
+		workingAreas []int64
+	}{
+		{"zero_areas", zeroAreas},
+		{"negative_areas", negativeAreas},
+		{"overlapping_areas", overlappingAreas},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			courier := models.CreateCourierDto{
+				WorkingHours: []string{"10:00-12:00"},
+				WorkingAreas: tc.workingAreas,
+				CourierType:  "FOOT",
+			}
+			courierRequest := models.CreateCourierRequest{
+				Couriers: []models.CreateCourierDto{courier},
+			}
+
+			data, err := json.Marshal(courierRequest)
+			assert.NoError(t, err, "failed to marshal courier")
+
+			resp, err := http.Post("http://localhost:8080/couriers", "application/json", bytes.NewBuffer(data))
+			assert.NoError(t, err, "HTTP error")
+			defer resp.Body.Close()
+
+			assert.Equal(t, http.StatusBadRequest, resp.StatusCode, "HTTP status code")
+		})
+	}
+}
+
+func TestCreateCourierInvalidType(t *testing.T) {
 	courier := models.CreateCourierDto{
 		WorkingHours: []string{"10:00-12:00", "13:00-18:00"},
-		WorkingAreas: []int64{-1},
-		CourierType:  "FOOT",
+		WorkingAreas: []int64{1, 2, 3},
+		CourierType:  "FOoT",
 	}
 	courierRequest := models.CreateCourierRequest{
 		Couriers: []models.CreateCourierDto{courier},

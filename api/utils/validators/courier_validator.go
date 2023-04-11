@@ -30,7 +30,7 @@ func ValidateCourier(courier models.CreateCourierDto) error {
 		} else {
 			setAreas[courier.WorkingAreas[i]] = struct{}{}
 		}
-		if courier.WorkingAreas[i] < 0 {
+		if courier.WorkingAreas[i] <= 0 {
 			return &ValidationCourierError{
 				Message: "Courier working area is invalid",
 				Data:    courier,
