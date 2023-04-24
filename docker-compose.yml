@@ -15,6 +15,13 @@ services:
       - db
     networks:
       - enrollment
+    restart: on-failure
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=postgres
 
   db:
     container_name: db
@@ -23,6 +30,8 @@ services:
       - "5432:5432"
     environment:
       - POSTGRES_PASSWORD=password
+    networks:
+      - enrollment
 
 networks:
   enrollment:

@@ -4,21 +4,23 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
 
-const (
-	host     = "localhost"
-	port     = 5432
-	user     = "postgres"
-	password = "password"
-	dbname   = "postgres"
-)
-
 func ConnectDB() *sqlx.DB {
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+	dbHost := os.Getenv("DB_HOST")
+	dbPort, err := strconv.Atoi(os.Getenv("DB_PORT"))
+	if err != nil {
+		log.Fatalf("Failed to parse the database port: %v", err)
+	}
+	dbUser := os.Getenv("DB_USER")
+	dbPassword := os.Getenv("DB_PASSWORD")
+	dbName := os.Getenv("DB_NAME")
+
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", dbHost, dbPort, dbUser, dbPassword, dbName)
 
 	db, err := sqlx.Open("postgres", psqlInfo)
 	if err != nil {
