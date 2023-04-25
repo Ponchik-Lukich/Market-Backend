@@ -34,4 +34,4 @@ A service that registers couriers, adds new orders, and assigns them to couriers
 2. Service on port 8080.
 3. PostgreSQL 15.2 on port 5432, with user=postgres and password=password.
 
-## Mady by Artemii Lukichev
+# Made by Artemii Lukichev
