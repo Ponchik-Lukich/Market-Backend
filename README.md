@@ -2,6 +2,8 @@
 
 A service that registers couriers, adds new orders, and assigns them to couriers.
 
+Сервис участвует в соревновании Yandex, поэтому репозиторий временно скрыт
+
 ## Features
 
 1. REST API with 7 basic methods.
