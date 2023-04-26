@@ -7,7 +7,6 @@ import (
 	"os"
 	"strings"
 	"time"
-	"yandex-team.ru/bstask/api/middleware"
 	"yandex-team.ru/bstask/api/models"
 	"yandex-team.ru/bstask/api/utils/validators"
 )
@@ -49,7 +48,7 @@ func CreateOrders(db *sqlx.DB, orders []models.CreateOrderDto) ([]models.Order, 
 	if err != nil {
 		return nil, err
 	}
-	defer middleware.RollbackOrCommit(tx, &err)
+	defer RollbackOrCommit(tx, &err)
 
 	chunkSize := 16382
 	for i := 0; i < len(orders); i += chunkSize {
@@ -96,7 +95,7 @@ func CompleteOrder(db *sqlx.DB, orders []models.CompleteOrderDto) ([]models.Orde
 	if err != nil {
 		return nil, err
 	}
-	defer middleware.RollbackOrCommit(tx, &err)
+	defer RollbackOrCommit(tx, &err)
 	var completedOrders []models.Order
 	setIDs := map[int64]struct{}{}
 	var orderIDs, courierIDs []int64
