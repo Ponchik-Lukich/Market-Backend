@@ -6,9 +6,9 @@ import (
 	"yandex-team.ru/bstask/api/controllers"
 )
 
-func SetupRoutes(e *echo.Echo, db *sqlx.DB) {
+func SetupRoutes(e *echo.Echo, db *sqlx.DB, rateLimit float64, rateBurst int) {
 	// Couriers
-	routesLimiter := newLimiter(10, 10)
+	routesLimiter := newLimiter(rateLimit, rateBurst)
 	e.POST("/couriers", withLimiter(routesLimiter, controllers.CreateCourier, db))
 	e.GET("/couriers/:courier_id", withLimiter(routesLimiter, controllers.GetCourierById, db))
 	e.GET("/couriers", withLimiter(routesLimiter, controllers.GetCouriers, db))
