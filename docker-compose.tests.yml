@@ -4,17 +4,12 @@ services:
   tests:
     image: golang:1.20-alpine
     volumes:
-      - ./tests:/code
-    working_dir: /code
+      - .:/code
+    working_dir: /code/tests
     environment:
       host: "http://app:8080"
-      DISABLE_RATE_LIMITER: "true" # Add this line
     links:
       - app
     networks:
       - enrollment
     command: /bin/sh -c "go mod tidy && go test -v"
-
-networks:
-  enrollment:
-    external: true
