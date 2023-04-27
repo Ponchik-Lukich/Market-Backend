@@ -22,7 +22,7 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=password
       - DB_NAME=postgres
-      - DISABLE_RATE_LIMITER=true
+      - DISABLE_RATE_LIMITER=false
 
   db:
     container_name: db

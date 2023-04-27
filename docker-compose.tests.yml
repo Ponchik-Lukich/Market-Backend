@@ -8,8 +8,13 @@ services:
     working_dir: /code
     environment:
       host: "http://app:8080"
+      DISABLE_RATE_LIMITER: "true" # Add this line
     links:
       - app
     networks:
       - enrollment
     command: /bin/sh -c "go mod tidy && go test -v"
+
+networks:
+  enrollment:
+    external: true

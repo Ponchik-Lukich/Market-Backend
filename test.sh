@@ -8,6 +8,7 @@ cleanup () {
 }
 trap 'cleanup ; printf "${RED}Tests Failed For Unexpected Reasons${NC}\n"' HUP INT QUIT PIPE TERM
 docker-compose -p ci -f docker-compose.yml -f docker-compose.tests.yml build && docker-compose -p ci -f docker-compose.yml -f docker-compose.tests.yml up -d
+docker exec -it ci-app-1 /bin/sh -c "export DISABLE_RATE_LIMITER=true"
 if [ $? -ne 0 ] ; then
   printf "${RED}Docker Compose Failed${NC}\n"
   exit -1
