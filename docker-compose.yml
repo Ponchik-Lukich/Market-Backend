@@ -17,12 +17,12 @@ services:
       - enrollment
     restart: on-failure
     environment:
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASSWORD=password
-      - DB_NAME=postgres
-      - DISABLE_RATE_LIMITER=true
+      DISABLE_RATE_LIMITER: ${DISABLE_RATE_LIMITER:-false}
+      DB_HOST: "db"
+      DB_PORT: 5432
+      DB_USER: "postgres"
+      DB_PASSWORD: "password"
+      DB_NAME: "postgres"
 
   db:
     container_name: db

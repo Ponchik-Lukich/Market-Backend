@@ -1,9 +1,10 @@
 # author: https://blog.harrison.dev/2016/06/19/integration-testing-with-docker-compose.html
-#!/bin/bash
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m'
+
+export DISABLE_RATE_LIMITER=true
 
 cleanup () {
   docker-compose -p ci kill

@@ -8,10 +8,25 @@ import (
 	"io"
 	"net/http"
 	"testing"
+	"time"
 	"yandex-team.ru/bstask/api/models"
 )
 
+func waitForAppReady() {
+	maxRetries := 10
+	retries := 0
+	for retries < maxRetries {
+		resp, err := http.Get("http://app:8080/ping")
+		if err == nil && resp.StatusCode == http.StatusOK {
+			break
+		}
+		retries++
+		time.Sleep(1 * time.Second)
+	}
+}
+
 func TestCreateCourier(t *testing.T) {
+	waitForAppReady()
 	courier := models.CreateCourierDto{
 		WorkingHours: []string{"10:00-12:00", "13:00-18:00"},
 		WorkingAreas: []int64{1, 2, 3},
