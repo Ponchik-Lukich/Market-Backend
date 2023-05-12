@@ -18,14 +18,14 @@ func getEnv(key, fallback string) string {
 }
 
 func ConnectDB() *sqlx.DB {
-	dbHost := getEnv("DB_HOST", "db")
-	dbPort, err := strconv.Atoi(getEnv("DB_PORT", "5432"))
+	dbHost := getEnv("POSTGRES_SERVER", "db")
+	dbPort, err := strconv.Atoi(getEnv("POSTGRES_PORT", "5432"))
 	if err != nil {
 		log.Fatalf("Failed to parse the database port: %v", err)
 	}
-	dbUser := getEnv("DB_USER", "postgres")
-	dbPassword := getEnv("DB_PASSWORD", "password")
-	dbName := getEnv("DB_NAME", "postgres")
+	dbUser := getEnv("POSTGRES_USER", "postgres")
+	dbPassword := getEnv("POSTGRES_PASSWORD", "password")
+	dbName := getEnv("POSTGRES_DB", "postgres")
 
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", dbHost, dbPort, dbUser, dbPassword, dbName)
 

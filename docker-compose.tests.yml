@@ -7,9 +7,9 @@ services:
       - .:/code
     working_dir: /code/tests
     environment:
-      host: "http://app:8080"
+      host: "http://application:8080"
     links:
-      - app
+      - application
     networks:
       - enrollment
     command: /bin/sh -c "go mod tidy && go test -v"

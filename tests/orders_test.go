@@ -25,7 +25,7 @@ func TestCreateOrder(t *testing.T) {
 	data, err := json.Marshal(orderRequest)
 	assert.NoError(t, err, "failed to marshal order")
 
-	resp, err := http.Post("http://app:8080/orders", "application/json", bytes.NewBuffer(data))
+	resp, err := http.Post("http://application:8080/orders", "application/json", bytes.NewBuffer(data))
 	assert.NoError(t, err, "HTTP error")
 	defer resp.Body.Close()
 
@@ -68,7 +68,7 @@ func TestCreateOrderInvalidCost(t *testing.T) {
 	data, err := json.Marshal(orderRequest)
 	assert.NoError(t, err, "failed to marshal order")
 
-	resp, err := http.Post("http://app:8080/orders", "application/json", bytes.NewBuffer(data))
+	resp, err := http.Post("http://application:8080/orders", "application/json", bytes.NewBuffer(data))
 	assert.NoError(t, err, "HTTP error")
 	defer resp.Body.Close()
 
@@ -89,7 +89,7 @@ func TestCreateOrderInvalidWeight(t *testing.T) {
 	data, err := json.Marshal(orderRequest)
 	assert.NoError(t, err, "failed to marshal order")
 
-	resp, err := http.Post("http://app:8080/orders", "application/json", bytes.NewBuffer(data))
+	resp, err := http.Post("http://application:8080/orders", "application/json", bytes.NewBuffer(data))
 	assert.NoError(t, err, "HTTP error")
 	defer resp.Body.Close()
 
@@ -139,7 +139,7 @@ func TestCreateOrderInvalidDeliveryHours(t *testing.T) {
 			data, err := json.Marshal(orderRequest)
 			assert.NoError(t, err, "failed to marshal order")
 
-			resp, err := http.Post("http://app:8080/orders", "application/json", bytes.NewBuffer(data))
+			resp, err := http.Post("http://application:8080/orders", "application/json", bytes.NewBuffer(data))
 			assert.NoError(t, err, "HTTP error")
 			defer resp.Body.Close()
 
@@ -162,7 +162,7 @@ func TestCreateOrderInvalidRegions(t *testing.T) {
 	data, err := json.Marshal(orderRequest)
 	assert.NoError(t, err, "failed to marshal order")
 
-	resp, err := http.Post("http://app:8080/orders", "application/json", bytes.NewBuffer(data))
+	resp, err := http.Post("http://application:8080/orders", "application/json", bytes.NewBuffer(data))
 	assert.NoError(t, err, "HTTP error")
 	defer resp.Body.Close()
 
@@ -172,7 +172,7 @@ func TestCreateOrderInvalidRegions(t *testing.T) {
 func TestGetOrderById(t *testing.T) {
 	var orderId int64 = 1
 
-	resp, err := http.Get(fmt.Sprintf("http://app:8080/orders/%d", orderId))
+	resp, err := http.Get(fmt.Sprintf("http://application:8080/orders/%d", orderId))
 	assert.NoError(t, err, "HTTP error")
 	defer resp.Body.Close()
 
@@ -188,7 +188,7 @@ func TestGetOrderById(t *testing.T) {
 func TestGetOrderByIdInvalid(t *testing.T) {
 	var orderId int64 = -1
 
-	resp, err := http.Get(fmt.Sprintf("http://app:8080/orders/%d", orderId))
+	resp, err := http.Get(fmt.Sprintf("http://application:8080/orders/%d", orderId))
 	assert.NoError(t, err, "HTTP error")
 	defer resp.Body.Close()
 

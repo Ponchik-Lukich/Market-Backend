@@ -60,12 +60,9 @@ The application should now be running at `http://localhost:8080`.
 
 This script will:
 
-1. Rename any existing `db` and `app` containers to avoid conflict.
-2. Create a Docker network called `enrollment`.
-3. Build the Docker images and start the Docker containers using Docker Compose.
-4. Execute the test cases.
-5. Cleanup the Docker environment.
-6. Rename the `db` and `app` containers back to their original names.
+1. Build the Docker images and start the Docker containers using Docker Compose with disabled rate_limiter.
+2. Execute the test cases.
+3. Cleanup the Docker environment.
 
 ## Running the Application using Dockerfile
 

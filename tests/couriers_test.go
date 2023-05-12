@@ -16,7 +16,7 @@ func waitForAppReady() {
 	maxRetries := 10
 	retries := 0
 	for retries < maxRetries {
-		resp, err := http.Get("http://app:8080/ping")
+		resp, err := http.Get("http://application:8080/ping")
 		if err == nil && resp.StatusCode == http.StatusOK {
 			break
 		}
@@ -39,7 +39,7 @@ func TestCreateCourier(t *testing.T) {
 	data, err := json.Marshal(courierRequest)
 	assert.NoError(t, err, "failed to marshal courier")
 
-	resp, err := http.Post("http://app:8080/couriers", "application/json", bytes.NewBuffer(data))
+	resp, err := http.Post("http://application:8080/couriers", "application/json", bytes.NewBuffer(data))
 	assert.NoError(t, err, "HTTP error")
 	defer resp.Body.Close()
 
@@ -109,7 +109,7 @@ func TestCreateCourierInvalidWorkingHours(t *testing.T) {
 			data, err := json.Marshal(courierRequest)
 			assert.NoError(t, err, "failed to marshal courier")
 
-			resp, err := http.Post("http://app:8080/couriers", "application/json", bytes.NewBuffer(data))
+			resp, err := http.Post("http://application:8080/couriers", "application/json", bytes.NewBuffer(data))
 			assert.NoError(t, err, "HTTP error")
 			defer resp.Body.Close()
 
@@ -149,7 +149,7 @@ func TestCreateCourierInvalidWorkingAreas(t *testing.T) {
 			data, err := json.Marshal(courierRequest)
 			assert.NoError(t, err, "failed to marshal courier")
 
-			resp, err := http.Post("http://app:8080/couriers", "application/json", bytes.NewBuffer(data))
+			resp, err := http.Post("http://application:8080/couriers", "application/json", bytes.NewBuffer(data))
 			assert.NoError(t, err, "HTTP error")
 			defer resp.Body.Close()
 
@@ -171,7 +171,7 @@ func TestCreateCourierInvalidType(t *testing.T) {
 	data, err := json.Marshal(courierRequest)
 	assert.NoError(t, err, "failed to marshal courier")
 
-	resp, err := http.Post("http://app:8080/couriers", "application/json", bytes.NewBuffer(data))
+	resp, err := http.Post("http://application:8080/couriers", "application/json", bytes.NewBuffer(data))
 	assert.NoError(t, err, "HTTP error")
 	defer resp.Body.Close()
 
@@ -180,7 +180,7 @@ func TestCreateCourierInvalidType(t *testing.T) {
 
 func TestGetCourierById(t *testing.T) {
 	var courierID int64 = 1
-	resp, err := http.Get(fmt.Sprintf("http://app:8080/couriers/%d", courierID))
+	resp, err := http.Get(fmt.Sprintf("http://application:8080/couriers/%d", courierID))
 	assert.NoError(t, err, "HTTP error")
 	defer resp.Body.Close()
 
@@ -195,7 +195,7 @@ func TestGetCourierById(t *testing.T) {
 
 func TestGetCourierByIdInvalid(t *testing.T) {
 	var courierID int64 = -1
-	resp, err := http.Get(fmt.Sprintf("http://app:8080/couriers/%d", courierID))
+	resp, err := http.Get(fmt.Sprintf("http://application:8080/couriers/%d", courierID))
 	assert.NoError(t, err, "HTTP error")
 	defer resp.Body.Close()
 

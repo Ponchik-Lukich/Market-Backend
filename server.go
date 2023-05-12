@@ -4,7 +4,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 	"os"
-	"strconv"
 	"yandex-team.ru/bstask/api/routes"
 	"yandex-team.ru/bstask/config"
 )
@@ -26,11 +25,7 @@ func (s *Server) Initialize() {
 func (s *Server) SetupServer() *echo.Echo {
 	e := echo.New()
 
-	disableRateLimiterEnv := os.Getenv("DISABLE_RATE_LIMITER")
-	disableRateLimiter, err := strconv.ParseBool(disableRateLimiterEnv)
-	if err != nil {
-		disableRateLimiter = false
-	}
+	disableRateLimiter := os.Getenv("DISABLE_RATE_LIMITER") == "true"
 
 	if disableRateLimiter {
 		routes.SetupRoutes(e, s.DB, 10000, 10000)

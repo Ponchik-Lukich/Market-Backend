@@ -32,7 +32,7 @@ func TestGetCourierMetaIfo(t *testing.T) {
 	data, err := json.Marshal(orderRequest)
 	assert.NoError(t, err, "failed to marshal order")
 
-	resp, err := http.Post("http://app:8080/orders", "application/json", bytes.NewBuffer(data))
+	resp, err := http.Post("http://application:8080/orders", "application/json", bytes.NewBuffer(data))
 	assert.NoError(t, err, "HTTP error")
 	defer resp.Body.Close()
 
@@ -71,7 +71,7 @@ func TestGetCourierMetaIfo(t *testing.T) {
 	data, err = json.Marshal(courierRequest)
 	assert.NoError(t, err, "failed to marshal couriers")
 
-	resp, err = http.Post("http://app:8080/couriers", "application/json", bytes.NewBuffer(data))
+	resp, err = http.Post("http://application:8080/couriers", "application/json", bytes.NewBuffer(data))
 	assert.NoError(t, err, "HTTP error")
 	defer resp.Body.Close()
 
@@ -96,7 +96,7 @@ func TestGetCourierMetaIfo(t *testing.T) {
 	courierWorkingHours := courierResponse.Couriers[0].WorkingHours
 	courierWorkingAreas := courierResponse.Couriers[0].WorkingAreas
 	courierType := courierResponse.Couriers[0].CourierType
-	resp, err = http.Get(fmt.Sprintf("http://app:8080/test/%d", courierID))
+	resp, err = http.Get(fmt.Sprintf("http://application:8080/test/%d", courierID))
 	assert.NoError(t, err, "HTTP error")
 	defer resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "HTTP status code")
@@ -121,14 +121,14 @@ func TestGetCourierMetaIfo(t *testing.T) {
 	data, err = json.Marshal(completeOrderRequest)
 	assert.NoError(t, err, "failed to marshal complete order")
 
-	resp, err = http.Post("http://app:8080/orders/complete", "application/json", bytes.NewBuffer(data))
+	resp, err = http.Post("http://application:8080/orders/complete", "application/json", bytes.NewBuffer(data))
 	assert.NoError(t, err, "HTTP error")
 	defer resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "HTTP status code")
 
 	startDate := "2023-01-01"
 	endDate := "2023-01-02"
-	resp, err = http.Get(fmt.Sprintf("http://app:8080/couriers/meta-info/%d?startDate=%s&endDate=%s", courierID, startDate, endDate))
+	resp, err = http.Get(fmt.Sprintf("http://application:8080/couriers/meta-info/%d?startDate=%s&endDate=%s", courierID, startDate, endDate))
 	assert.NoError(t, err, "HTTP error")
 	defer resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "HTTP status code")
