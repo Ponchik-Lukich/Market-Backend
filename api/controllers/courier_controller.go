@@ -115,9 +115,28 @@ func GetCourierMetaInfo(c echo.Context, db *sqlx.DB) error {
 			})
 		default:
 			return echo.NewHTTPError(http.StatusInternalServerError, models.InternalServerErrorResponse{
-				Error: "Error creating couriers",
+				Error: "Error getting courier meta info",
 			})
 		}
 	}
 	return c.JSON(http.StatusOK, courier)
+}
+
+func UpdateCourier(c echo.Context, db *sqlx.DB) error {
+	courierID, err := strconv.ParseInt(c.Param("courier_id"), 10, 64)
+	if err != nil || courierID <= 0 {
+		println(err)
+		badRequest := models.BadRequestResponse{
+			Error:   "bad request",
+			Message: "courier_id must be a positive integer",
+		}
+		return c.JSON(http.StatusBadRequest, badRequest)
+	}
+	err = services.TestMetaInfo(db, courierID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, models.InternalServerErrorResponse{
+			Error: "Error updating orders",
+		})
+	}
+	return c.JSON(http.StatusOK, "ok")
 }

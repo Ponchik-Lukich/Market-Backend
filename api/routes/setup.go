@@ -20,6 +20,7 @@ func SetupRoutes(e *echo.Echo, db *sqlx.DB, rateLimit float64, rateBurst int) {
 	e.GET("/orders", withLimiter(routesLimiter, controllers.GetOrders, db))
 	e.POST("/orders/complete", withLimiter(routesLimiter, controllers.CompleteOrder, db))
 
-	// Ping
 	e.GET("/ping", ping)
+	// For testing because i didn't implement assignment
+	e.GET("/test/:courier_id", withLimiter(routesLimiter, controllers.UpdateCourier, db))
 }

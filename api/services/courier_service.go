@@ -86,7 +86,7 @@ func GetCourierMetaInfo(db *sqlx.DB, courierID int64, startDate string, endDate 
 		return nil, err
 	}
 	folder := fmt.Sprintf("%s/%s/%s/%s", dir, "api", "models", "queries")
-	file := "return_rating"
+	file := "get_metaInfo"
 	query, err := os.ReadFile(fmt.Sprintf("%s/%s.sql", folder, file))
 	if err != nil {
 		return nil, err
@@ -114,4 +114,13 @@ func GetCourierMetaInfo(db *sqlx.DB, courierID int64, startDate string, endDate 
 		courierMetaInfo.Rating = courierMetaInfo.Rating / hours
 	}
 	return &courierMetaInfo, nil
+}
+
+func TestMetaInfo(db *sqlx.DB, courierID int64) error {
+	query := `UPDATE orders SET courier_id = $1 WHERE weight=0.01 AND delivery_district=1;`
+	_, err := db.Exec(query, courierID)
+	if err != nil {
+		return err
+	}
+	return nil
 }
