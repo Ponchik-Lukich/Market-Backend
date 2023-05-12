@@ -115,7 +115,7 @@ func GetCourierMetaInfo(c echo.Context, db *sqlx.DB) error {
 			})
 		default:
 			return echo.NewHTTPError(http.StatusInternalServerError, models.InternalServerErrorResponse{
-				Error: "Error creating couriers",
+				Error: "Error getting courier meta info",
 			})
 		}
 	}
