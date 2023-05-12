@@ -12,7 +12,7 @@ import (
 	"yandex-team.ru/bstask/api/models"
 )
 
-func TestGetMetaIfo(t *testing.T) {
+func TestGetCourierMetaIfo(t *testing.T) {
 	var orders []models.CreateOrderDto
 	costs := []int32{100, 200, 300, 100, 200, 300, 100, 200, 300}
 	deliveryHours := "00:00-23:59"
@@ -59,11 +59,9 @@ func TestGetMetaIfo(t *testing.T) {
 	}
 
 	var couriers []models.CreateCourierDto
-	workingHours := []string{"00:00-23:59"}
-	workingAreas := []int64{1}
 	couriers = append(couriers, models.CreateCourierDto{
-		WorkingHours: workingHours,
-		WorkingAreas: workingAreas,
+		WorkingHours: []string{"00:00-23:59"},
+		WorkingAreas: []int64{1},
 		CourierType:  "FOOT",
 	})
 	courierRequest := models.CreateCourierRequest{
