@@ -32,7 +32,6 @@ func ValidateTimeIntervals(intervals []string) bool {
 	sort.Slice(intervals, func(i, j int) bool {
 		return intervals[i] < intervals[j]
 	})
-	// Check for overlaps
 	var latestEnd int
 	for _, interval := range intervals {
 		var startHour, startMinute, endHour, endMinute int

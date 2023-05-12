@@ -4,4 +4,4 @@ WHERE NOT EXISTS(
         SELECT 1
         FROM couriers
         WHERE couriers.id = id_list.ids
-    );
+);
