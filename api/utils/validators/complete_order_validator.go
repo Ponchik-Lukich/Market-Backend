@@ -77,10 +77,10 @@ func ValidateExistingCouriers(err error, ids []int64) error {
 		if err.Error() == "sql: no rows in result set" {
 			return nil
 		}
-		return err
+		return &ValidationCompleteOrderError{
+			Message: "Data contains not existing couriers ids",
+			Err:     ids,
+		}
 	}
-	return &ValidationCompleteOrderError{
-		Message: "Data contains not existing couriers ids",
-		Err:     ids,
-	}
+	return nil
 }
